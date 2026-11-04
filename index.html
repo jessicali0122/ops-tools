@@ -240,7 +240,6 @@ iframe{width:100%;height:320px;transition:height .15s;border:2px solid var(--lin
         <label class="sw"><input type="checkbox" id="showTitle" checked><span class="sw-ui"></span>輸出標題</label>
         <label class="sw"><input type="checkbox" id="withCss" checked><span class="sw-ui"></span>附帶 CSS 與 JS（可直接整段貼）</label>
         <label class="sw"><input type="checkbox" id="firstOpen"><span class="sw-ui"></span>第一題預設展開</label>
-        <label class="sw"><input type="checkbox" id="autoCopy"><span class="sw-ui"></span>貼上後自動複製結果</label>
         </details>
       </div>
     </div>
@@ -514,9 +513,8 @@ async function pasteClip(){
   try{const t=await navigator.clipboard.readText();if(!t.trim())return toast('剪貼簿是空的');$('src').value=t;onSrc(true);}
   catch(e){toast('瀏覽器擋住讀取，請直接在框內按 Ctrl+V');}
 }
-function onSrc(fromPaste){
+function onSrc(){
   autoBrand();renderChips();build();
-  if(fromPaste&&$('autoCopy').checked&&$('out').value)copyText($('out').value,'已轉換並複製');
 }
 $('src').addEventListener('input',()=>onSrc(false));
 $('src').addEventListener('paste',()=>setTimeout(()=>onSrc(true),0));
