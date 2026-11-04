@@ -29,7 +29,12 @@ iframe.on{display:block}
 .gcard h1{font-size:22px;font-weight:900;margin-bottom:8px}
 .gcard h1 b{color:var(--accent)}
 .gcard p{font-size:14px;color:var(--mut);line-height:1.6;margin-bottom:24px}
-#gbtn{display:flex;justify-content:center;min-height:44px}
+#gbtn{appearance:none;font:inherit;font-size:14px;font-weight:700;display:inline-flex;align-items:center;justify-content:center;gap:12px;width:100%;padding:12px 24px;border:2px solid var(--accent);border-radius:999px;background:#fff;color:var(--accent);cursor:pointer;transition:.15s}
+#gbtn:hover:not(:disabled){background:var(--accent);color:#fff}
+#gbtn:focus-visible{outline:3px solid #99c2ee;outline-offset:2px}
+#gbtn:disabled{opacity:.5;cursor:default}
+#gbtn svg{width:20px;height:20px;flex:none}
+.gcard .gtip{font-size:12px;color:var(--mut);margin-top:16px;line-height:1.6;margin-bottom:0}
 #gmsg{font-size:14px;color:#b71c22;margin-top:16px;min-height:24px;line-height:1.6}
 </style>
 </head>
@@ -38,8 +43,12 @@ iframe.on{display:block}
   <div class="gcard">
     <h1>OPS <b>工具箱</b></h1>
     <p>請使用公司帳號（@tsagroup.com.tw）登入後使用</p>
-    <div id="gbtn"></div>
+    <button id="gbtn" type="button" disabled>
+      <svg viewBox="0 0 48 48" aria-hidden="true"><path fill="#EA4335" d="M24 9.5c3.5 0 6.6 1.2 9.1 3.6l6.8-6.8C35.8 2.4 30.3 0 24 0 14.6 0 6.5 5.4 2.6 13.2l7.9 6.1C12.4 13.6 17.7 9.5 24 9.5z"/><path fill="#4285F4" d="M46.5 24.5c0-1.6-.1-3.1-.4-4.5H24v9h12.7c-.6 3-2.3 5.5-4.8 7.2l7.6 5.9c4.4-4.1 7-10.1 7-17.6z"/><path fill="#FBBC05" d="M10.5 28.7c-.5-1.5-.8-3-.8-4.7s.3-3.2.8-4.7l-7.9-6.1C.9 16.4 0 20.1 0 24s.9 7.6 2.6 10.8l7.9-6.1z"/><path fill="#34A853" d="M24 48c6.5 0 11.9-2.1 15.9-5.8l-7.6-5.9c-2.1 1.4-4.9 2.3-8.3 2.3-6.3 0-11.6-4.1-13.5-9.8l-7.9 6.1C6.5 42.6 14.6 48 24 48z"/></svg>
+      <span>使用公司 Google 帳號登入</span>
+    </button>
     <div id="gmsg" role="alert"></div>
+    <p class="gtip">登入視窗被擋住時，請允許此網頁的彈出視窗</p>
   </div>
 </div>
 <div class="bar">
@@ -2689,25 +2698,41 @@ buildLayoutBtns();syncUI();renderCollage();loadPresets();restoreAssets();
   var gate=document.getElementById('gate'),msg=document.getElementById('gmsg');
   function openApp(){gate.hidden=true;show(init);}
   function claims(c){try{var s=c.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');return JSON.parse(decodeURIComponent(escape(atob(s))));}catch(e){return null;}}
-  function okCred(c){
-    var p=claims(c);
-    return !!p&&p.aud===CID&&p.hd===DOM&&p.email_verified!==false&&typeof p.email==='string'&&p.email.toLowerCase().slice(-(DOM.length+1))==='@'+DOM&&p.exp*1000>Date.now();
-  }
+  function okClaims(p){return !!p&&p.hd===DOM&&p.email_verified!==false&&typeof p.email==='string'&&p.email.toLowerCase().slice(-(DOM.length+1))==='@'+DOM;}
+  function okCred(c){var p=claims(c);return okClaims(p)&&p.aud===CID&&p.exp*1000>Date.now();}
+  function remember(email){try{localStorage.setItem(TK,JSON.stringify({e:email,x:Date.now()+12*3600*1000}));}catch(e){}}
+  function savedOk(){try{var o=JSON.parse(localStorage.getItem(TK)||'null');return !!o&&typeof o.e==='string'&&o.e.toLowerCase().slice(-(DOM.length+1))==='@'+DOM&&o.x>Date.now();}catch(e){return false;}}
+  function deny(){msg.textContent='這個帳號不是公司帳號，請改用 @tsagroup.com.tw 登入';}
   if(location.protocol==='file:'||/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){openApp();return;}
-  var saved='';try{saved=localStorage.getItem(TK)||'';}catch(e){}
-  if(saved&&okCred(saved)){openApp();return;}
+  if(savedOk()){openApp();return;}
   var g=document.createElement('script');
   g.src='https://accounts.google.com/gsi/client';g.async=true;
   g.onerror=function(){msg.textContent='登入元件載入失敗，請檢查網路後重新整理';};
   g.onload=function(){
+    var btn=document.getElementById('gbtn');
+    // 自動偵測：瀏覽器已登入公司帳號時，直接帶入、不用按按鈕
     google.accounts.id.initialize({
-      client_id:CID,
+      client_id:CID,auto_select:true,cancel_on_tap_outside:false,
       callback:function(r){
-        if(r&&r.credential&&okCred(r.credential)){try{localStorage.setItem(TK,r.credential);}catch(e){}openApp();}
-        else msg.textContent='這個帳號不是公司帳號，請改用 @tsagroup.com.tw 登入';
+        if(r&&r.credential&&okCred(r.credential)){remember(claims(r.credential).email);openApp();}
+        else deny();
       }
     });
-    google.accounts.id.renderButton(document.getElementById('gbtn'),{theme:'outline',size:'large',text:'signin_with',locale:'zh-TW'});
+    google.accounts.id.prompt();
+    // 手動登入：自訂樣式的按鈕，開 Google 登入視窗
+    var tc=google.accounts.oauth2.initTokenClient({
+      client_id:CID,scope:'openid email profile',hd:DOM,prompt:'select_account',
+      callback:function(r){
+        if(!r||!r.access_token){msg.textContent='登入沒有完成，請再按一次';return;}
+        fetch('https://www.googleapis.com/oauth2/v3/userinfo',{headers:{Authorization:'Bearer '+r.access_token}})
+          .then(function(x){return x.json();})
+          .then(function(p){if(okClaims(p)){remember(p.email);openApp();}else deny();})
+          .catch(function(){msg.textContent='登入失敗，請檢查網路後再試';});
+      },
+      error_callback:function(){msg.textContent='登入視窗被關閉或被擋住，請再按一次（需允許彈出視窗）';}
+    });
+    btn.disabled=false;
+    btn.onclick=function(){msg.textContent='';tc.requestAccessToken();};
   };
   document.head.appendChild(g);
 })();
