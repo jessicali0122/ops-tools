@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>OPS Tool</title>
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E%F0%9F%A7%B0%3C/text%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
 <style>
@@ -229,21 +230,11 @@ iframe{width:100%;height:320px;transition:height .15s;border:2px solid var(--lin
         <div class="sec-t">展開符號 <span class="sec-en">ICON</span></div>
         <div class="chips" id="symChips" style="margin-top:12px"></div>
         <label class="sw" style="margin-top:12px"><input type="checkbox" id="noJs"><span class="sw-ui"></span>不用 JS 版（促銷賣場用）</label>
-        <details class="adv"><summary>更多設定（字體、標題、其他）</summary>
-        <div class="lbl">字體大小 px（留空＝沿用網站）</div>
-        <div class="colors">
-          <label style="flex-direction:column;align-items:stretch;gap:4px">標題<input type="text" id="fsT" value="20" inputmode="numeric"></label>
-          <label style="flex-direction:column;align-items:stretch;gap:4px">符號<input type="text" id="fsI" value="20" inputmode="numeric"></label>
-          <label style="flex-direction:column;align-items:stretch;gap:4px">問題<input type="text" id="fsQ" value="" inputmode="numeric"></label>
-          <label style="flex-direction:column;align-items:stretch;gap:4px">答案<input type="text" id="fsA" value="" inputmode="numeric"></label>
-        </div>
+        <details class="adv"><summary>更多設定（標題、其他）</summary>
+        <input type="hidden" id="fsT" value="20"><input type="hidden" id="fsI" value="20"><input type="hidden" id="fsQ" value=""><input type="hidden" id="fsA" value="">
         <label class="sw"><input type="checkbox" id="normP" checked><span class="sw-ui"></span>半形標點自動改全形（只動標點）</label>
         <label class="sw"><input type="checkbox" id="numQ" checked><span class="sw-ui"></span>問題加編號（Q1、Q2…）</label>
-        <div class="lbl">自訂符號</div>
-        <div class="colors">
-          <label style="flex-direction:column;align-items:stretch;gap:4px">收合時<input type="text" id="symC" value="＋"></label>
-          <label style="flex-direction:column;align-items:stretch;gap:4px">展開時<input type="text" id="symO" value="−"></label>
-        </div>
+        <input type="hidden" id="symC" value="＋"><input type="hidden" id="symO" value="−">
         <div class="lbl">標題文字</div>
         <input type="text" id="title" value="常見問題｜Q&amp;A">
         <label class="sw"><input type="checkbox" id="showTitle" checked><span class="sw-ui"></span>輸出標題</label>
@@ -367,6 +358,24 @@ const DEFAULTS={
 };
 let memBrands={};
 function userBrands(){let u={};try{u=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}return Object.assign({},u,memBrands)}
+/* 雲端同步（存在 Google 帳號的應用程式專用資料夾；本機開啟時沒有雲端，只存這台電腦） */
+let cloudSynced=false,pulling=false,pullFailed=false;
+const getCloud=()=>{try{return parent!==window&&parent.opsCloud||null}catch(e){return null}};
+function pushCloud(){
+  const c=getCloud();if(!c)return;
+  c.save(userBrands()).catch(()=>toast('已存在這台電腦，但同步到 Google 帳號失敗'));
+}
+function pullCloud(interactive){
+  const c=getCloud();if(!c||cloudSynced||pulling||pullFailed)return;
+  pulling=true;
+  c.load(interactive).then(o=>{
+    cloudSynced=true;
+    if(o===null){if(Object.keys(userBrands()).length)c.save(userBrands()).catch(()=>{});return;}
+    if(!o||typeof o!=='object')return;
+    try{localStorage.setItem(KEY,JSON.stringify(o));memBrands={};}catch(e){memBrands=o;}
+    renderChips();autoBrand();renderChips();build();
+  }).catch(()=>{if(interactive)pullFailed=true;}).then(()=>{pulling=false;});
+}
 function allBrands(){return Object.assign({},DEFAULTS,userBrands())}
 let cur='',locked=false;
 function detectBrand(text){
@@ -405,6 +414,7 @@ function saveBrand(){
   const u=userBrands();u[n]={qc:$('qc').value,ic:$('ic').value,kw:[n]};
   let saved=true;
   try{localStorage.setItem(KEY,JSON.stringify(u))}catch(e){saved=false;memBrands[n]=u[n];}
+  pushCloud();
   locked=true;cur=n;$('bname').value='';renderChips();toast(saved?'已儲存品牌：'+n:'已套用（此瀏覽器無法永久儲存，關閉後會消失）');
 }
 function delBrand(){
@@ -412,6 +422,7 @@ function delBrand(){
   if(DEFAULTS[cur])return toast('內建品牌不能刪');
   const u=userBrands();delete u[cur];delete memBrands[cur];
   try{localStorage.setItem(KEY,JSON.stringify(u))}catch(e){}
+  pushCloud();
   toast('已刪除：'+cur);locked=false;cur='';autoBrand();renderChips();build();
 }
 
@@ -562,6 +573,8 @@ function renderSyms(){
 $('symChips').addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;const s=SYMS[c.dataset.i];$('symC').value=s[0];$('symO').value=s[1];renderSyms();build();});
 ['symC','symO'].forEach(id=>$(id).addEventListener('input',()=>{renderSyms();build();}));
 ['title','withCss','noJs','showTitle','firstOpen','numQ','normP','fsT','fsI','fsQ','fsA'].forEach(id=>$(id).addEventListener('input',build));
+pullCloud(false);
+document.addEventListener('pointerdown',()=>pullCloud(true));
 renderChips();renderSyms();build();
 <@@SC@@/script>
 </body>
@@ -2731,11 +2744,65 @@ buildLayoutBtns();syncUI();renderCollage();loadPresets();restoreAssets();
   function savedOk(){try{var o=JSON.parse(localStorage.getItem(TK)||'null');return !!o&&typeof o.e==='string'&&o.e.toLowerCase().slice(-(DOM.length+1))==='@'+DOM&&o.x>Date.now();}catch(e){return false;}}
   function deny(){msg.textContent='這個帳號不是公司帳號，請改用 @tsagroup.com.tw 登入';}
   if(location.protocol==='file:'||/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){openApp();return;}
-  if(savedOk()){openApp();return;}
+  // 雲端設定：存在使用者自己 Google 雲端硬碟的「應用程式專用資料夾」，換電腦也跟著帳號走
+  var FN='qa-brands.json',fileId,tok={t:'',x:0},pend=null,tcCloud=null;
+  try{var st=JSON.parse(sessionStorage.getItem('opstools.at')||'null');if(st&&st.x>Date.now())tok=st;}catch(e){}
+  function getToken(interactive){
+    if(tok.t&&tok.x>Date.now())return Promise.resolve(tok.t);
+    if(!interactive||!tcCloud)return Promise.reject(new Error('no-token'));
+    return new Promise(function(res,rej){pend={res:res,rej:rej};tcCloud.requestAccessToken({prompt:''});});
+  }
+  function dget(t,url){return fetch(url,{headers:{Authorization:'Bearer '+t}}).then(function(r){if(!r.ok)throw new Error(r.status);return r;});}
+  function findFile(t){
+    if(fileId!==undefined)return Promise.resolve(fileId);
+    return dget(t,'https://www.googleapis.com/drive/v3/files?spaces=appDataFolder&pageSize=1&fields=files(id)&q='+encodeURIComponent("name='"+FN+"'"))
+      .then(function(r){return r.json();}).then(function(j){fileId=(j.files&&j.files[0]&&j.files[0].id)||null;return fileId;});
+  }
+  function initCloud(){
+    tcCloud=google.accounts.oauth2.initTokenClient({
+      client_id:CID,scope:'https://www.googleapis.com/auth/drive.appdata',hd:DOM,prompt:'',
+      callback:function(r){
+        var p=pend;pend=null;if(!p)return;
+        if(r&&r.access_token){tok={t:r.access_token,x:Date.now()+((r.expires_in||3600)-60)*1000};try{sessionStorage.setItem('opstools.at',JSON.stringify(tok));}catch(e){}p.res(tok.t);}
+        else p.rej(new Error('denied'));
+      },
+      error_callback:function(){var p=pend;pend=null;if(p)p.rej(new Error('closed'));}
+    });
+    window.opsCloud={
+      load:function(interactive){
+        return getToken(interactive).then(function(t){
+          return findFile(t).then(function(id){
+            if(!id)return null;
+            return dget(t,'https://www.googleapis.com/drive/v3/files/'+id+'?alt=media').then(function(r){return r.json();});
+          });
+        });
+      },
+      save:function(obj){
+        return getToken(true).then(function(t){
+          return findFile(t).then(function(id){
+            var json=JSON.stringify(obj),h={Authorization:'Bearer '+t};
+            if(id){
+              h['Content-Type']='application/json; charset=UTF-8';
+              return fetch('https://www.googleapis.com/upload/drive/v3/files/'+id+'?uploadType=media',{method:'PATCH',headers:h,body:json});
+            }
+            var b='opsb'+Date.now();
+            h['Content-Type']='multipart/related; boundary='+b;
+            var body='--'+b+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+JSON.stringify({name:FN,parents:['appDataFolder']})+'\r\n--'+b+'\r\nContent-Type: application/json; charset=UTF-8\r\n\r\n'+json+'\r\n--'+b+'--';
+            return fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&fields=id',{method:'POST',headers:h,body:body})
+              .then(function(r){if(!r.ok)throw new Error(r.status);return r.json();}).then(function(j){fileId=j.id;});
+          }).then(function(r){if(r&&r.ok===false)throw new Error(r.status);});
+        });
+      }
+    };
+  }
+  var needLogin=!savedOk();
+  if(!needLogin)openApp();
   var g=document.createElement('script');
   g.src='https://accounts.google.com/gsi/client';g.async=true;
-  g.onerror=function(){msg.textContent='登入元件載入失敗，請檢查網路後重新整理';};
+  g.onerror=function(){if(needLogin)msg.textContent='登入元件載入失敗，請檢查網路後重新整理';};
   g.onload=function(){
+    initCloud();
+    if(!needLogin)return;
     var btn=document.getElementById('gbtn');
     // 自動偵測：瀏覽器已登入公司帳號時，直接帶入、不用按按鈕
     google.accounts.id.initialize({
