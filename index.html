@@ -1,0 +1,2718 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OPS 工具箱</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--accent:#0066CC;--ink:#1b2430;--mut:#5b6675;--line:#d5dbe3;--bg:#f4f6f9}
+*{box-sizing:border-box;margin:0}
+html,body{height:100%}
+body{font-family:'Noto Sans TC',system-ui,sans-serif;background:var(--bg);color:var(--ink);display:flex;flex-direction:column;overflow:hidden}
+.bar{flex:none;height:56px;display:flex;align-items:center;gap:16px;padding:0 20px;background:#fff;border-bottom:2px solid var(--line)}
+.brand{font-weight:900;font-size:16px;letter-spacing:.5px;white-space:nowrap}
+.brand b{color:var(--accent)}
+.tabs{display:flex;gap:8px;margin-left:8px}
+.tab{appearance:none;font:inherit;font-size:14px;font-weight:700;padding:8px 20px;border:2px solid var(--line);border-radius:999px;background:#fff;color:var(--mut);cursor:pointer;white-space:nowrap;transition:.15s}
+.tab:hover{border-color:var(--accent);color:var(--accent)}
+.tab.on{background:var(--accent);border-color:var(--accent);color:#fff}
+.tab:focus-visible{outline:3px solid #99c2ee;outline-offset:2px}
+.stage{flex:1;min-height:0;position:relative}
+iframe{position:absolute;inset:0;width:100%;height:100%;border:0;background:var(--bg);display:none}
+iframe.on{display:block}
+@media(max-width:520px){.bar{padding:0 12px;gap:8px}.brand{display:none}.tabs{margin-left:0}.tab{padding:8px 14px}}
+#gate{position:fixed;inset:0;z-index:10;background:var(--bg);display:flex;align-items:center;justify-content:center;padding:16px}
+#gate[hidden]{display:none}
+.gcard{width:100%;max-width:400px;background:#fff;border:2px solid var(--line);border-radius:16px;padding:32px 24px;text-align:center}
+.gcard h1{font-size:22px;font-weight:900;margin-bottom:8px}
+.gcard h1 b{color:var(--accent)}
+.gcard p{font-size:14px;color:var(--mut);line-height:1.6;margin-bottom:24px}
+#gbtn{display:flex;justify-content:center;min-height:44px}
+#gmsg{font-size:14px;color:#b71c22;margin-top:16px;min-height:24px;line-height:1.6}
+</style>
+</head>
+<body>
+<div id="gate">
+  <div class="gcard">
+    <h1>OPS <b>工具箱</b></h1>
+    <p>請使用公司帳號（@tsagroup.com.tw）登入後使用</p>
+    <div id="gbtn"></div>
+    <div id="gmsg" role="alert"></div>
+  </div>
+</div>
+<div class="bar">
+  <div class="brand">OPS <b>工具箱</b></div>
+  <div class="tabs" role="tablist">
+    <button class="tab" role="tab" data-t="qa">QA-to-Html</button>
+    <button class="tab" role="tab" data-t="img">Img-Tool</button>
+  </div>
+</div>
+<div class="stage">
+  <iframe id="f-qa" title="QA-to-Html" allow="clipboard-read; clipboard-write"></iframe>
+  <iframe id="f-img" title="Img-Tool" allow="clipboard-read; clipboard-write; fullscreen"></iframe>
+</div>
+
+<script type="text/x-tpl" id="tpl-qa"><!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>QA 轉 HTML 工具</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#F6F7F9;--card:#fff;--line:#E3E6EA;--line-strong:#CBD0D7;--hover:#F3F4F6;
+  --ink:#1F2933;--ink-2:#4B5563;--mute:#6B7280;--faint:#9AA3AE;
+  --accent:#0066CC;--accent-h:#0A57AE;--accent-ink:#0C447C;--accent-line:#B5D4F4;--accent-soft:#F5F9FF;
+  --ok:#2E7D32;--warn:#B45309;--warn-line:#F5D9A8;--warn-soft:#FFFAF0;
+  --shadow:0 2px 4px rgba(16,24,40,.04),0 8px 24px rgba(16,24,40,.06);
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.6;letter-spacing:.02em;word-break:keep-all;overflow-wrap:anywhere}
+button,input,select,textarea,summary{font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif}
+button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+[hidden]{display:none!important}
+svg{display:block}
+
+/* 頁首 */
+header{background:#fff;border-bottom:2px solid var(--line);position:sticky;top:0;z-index:20}
+.hd{max-width:1760px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:12px 24px;flex-wrap:wrap}
+.brandwrap{display:flex;align-items:center;gap:12px}
+.mark{width:40px;height:40px;border-radius:12px;background:var(--accent);color:#fff;display:grid;place-items:center;flex:none}
+.mark svg{width:22px;height:22px}
+.brand b{display:block;font-size:22px;font-weight:700;line-height:1.35;letter-spacing:.08em;white-space:nowrap}
+.brand small{display:block;font-size:12px;font-weight:500;color:var(--faint);letter-spacing:.2em;line-height:1.2;white-space:nowrap}
+.local{margin-left:auto;display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2);border:2px solid var(--line);border-radius:1000px;padding:2px 12px;white-space:nowrap}
+
+/* 版面 */
+main{max-width:1760px;margin:0 auto;padding:24px;display:grid;grid-template-columns:minmax(0,1fr);gap:24px}
+@media(min-width:900px){
+  main{grid-template-columns:288px minmax(0,1fr);align-items:start}
+  aside{position:sticky;top:90px;max-height:calc(100vh - 114px);overflow:auto}
+}
+@media(max-width:899px){header{position:static}main{padding:16px;gap:16px}.work{order:-1}}
+.work{display:grid;grid-template-columns:minmax(0,1fr);gap:24px;min-width:0;align-items:start}
+
+.panel{background:#fff;border:2px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.sec{padding:16px 20px 20px}
+.sec+.sec{border-top:2px solid var(--line)}
+.sec-t{font-size:16px;font-weight:700;letter-spacing:.08em;white-space:nowrap;display:flex;align-items:baseline;gap:8px}
+.sec-en{font-size:12px;font-weight:500;color:var(--faint);letter-spacing:.2em}
+.lbl{font-size:14px;font-weight:500;color:var(--ink-2);margin:16px 0 8px}
+.hint{font-size:14px;color:var(--mute);line-height:1.7;margin-top:10px}
+
+/* 步驟標題 */
+.card-hd{display:flex;align-items:center;gap:10px;padding:16px 20px;border-bottom:2px solid var(--line);flex-wrap:wrap}
+.stn{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-weight:700;flex:none}
+.stp{font-size:16px;font-weight:700;letter-spacing:.08em;white-space:nowrap}
+.pill{font-size:12px;font-weight:500;color:var(--accent-ink);background:var(--accent-soft);border:2px solid var(--accent-line);border-radius:1000px;padding:0 12px;white-space:nowrap}
+.pill:empty{display:none}
+.card-bd{padding:20px;display:flex;flex-direction:column;gap:16px}
+
+textarea{width:100%;border:2px solid var(--line);border-radius:12px;padding:12px 14px;background:#fff;resize:vertical;line-height:1.7;min-height:240px}
+textarea:focus,input[type=text]:focus{outline:none;border-color:var(--accent)}
+textarea.out{font-family:"Noto Sans TC","Microsoft JhengHei",sans-serif;font-size:12px;background:#FAFBFC;min-height:140px;line-height:1.6;word-break:break-all}
+input[type=text]{height:36px;border:2px solid var(--line);border-radius:8px;padding:0 10px;background:#fff;min-width:0;width:100%}
+input[type=color]{width:44px;height:36px;padding:2px;border:2px solid var(--line);border-radius:8px;background:#fff;cursor:pointer;flex:none}
+
+/* 品牌 chips */
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.chip{display:inline-flex;align-items:center;gap:8px;border:2px solid var(--line);background:#fff;border-radius:1000px;padding:2px 14px;font-size:14px;color:var(--ink-2);white-space:nowrap}
+.chip:hover{border-color:var(--line-strong);color:var(--ink)}
+.chip.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink);font-weight:500}
+.dots{display:inline-flex}
+.dots i{width:12px;height:12px;border-radius:50%;box-shadow:0 0 0 2px #fff,0 0 0 3px var(--line)}
+.dots i+i{margin-left:2px}
+.colors{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.colors label{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink-2)}
+.save-row{display:flex;gap:8px;margin-top:12px}
+
+details.adv{margin-top:16px;border-top:2px dashed var(--line);padding-top:12px}
+details.adv summary{cursor:pointer;font-weight:500;color:var(--accent-ink);list-style:none;display:flex;align-items:center;gap:8px;user-select:none}
+details.adv summary::-webkit-details-marker{display:none}
+details.adv summary::before{content:'▸';color:var(--mute);transition:transform .15s}
+details.adv[open] summary::before{transform:rotate(90deg)}
+/* 開關 */
+.sw{display:flex;align-items:center;gap:10px;cursor:pointer;position:relative;line-height:1.35;margin-top:14px}
+.sw input{position:absolute;opacity:0;width:0;height:0}
+.sw-ui{width:36px;height:20px;border-radius:1000px;background:#D1D5DB;position:relative;flex:none;transition:background .15s}
+.sw-ui::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.18);transition:transform .15s}
+.sw input:checked+.sw-ui{background:var(--accent)}
+.sw input:checked+.sw-ui::after{transform:translateX(16px)}
+.sw input:focus-visible+.sw-ui{outline:2px solid var(--accent);outline-offset:2px}
+
+/* 按鈕 */
+.btns{display:flex;gap:10px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 18px;border:2px solid var(--accent);background:#fff;color:var(--accent-ink);border-radius:10px;font-weight:500;white-space:nowrap}
+.btn:hover{background:var(--accent-soft)}
+.btn svg{width:16px;height:16px}
+.btn.pri{background:var(--accent);color:#fff}
+.btn.pri:hover{background:var(--accent-h);border-color:var(--accent-h)}
+.btn.ghost{border-color:var(--line);color:var(--ink-2)}
+.btn.ghost:hover{background:var(--hover)}
+.btn.sm{height:36px;padding:0 14px}
+
+/* 智慧提示 */
+.notes{display:flex;flex-direction:column;gap:8px}
+.note{display:flex;gap:8px;align-items:flex-start;border:2px solid var(--accent-line);background:var(--accent-soft);border-radius:12px;padding:8px 14px;color:var(--ink-2);font-size:14px;line-height:1.6}
+.note.warn{border-color:var(--warn-line);background:var(--warn-soft);color:var(--warn)}
+.note.ok{border-color:#BFE0C1;background:#F4FAF4;color:var(--ok)}
+.note b{color:var(--ink)}
+.note.warn b{color:var(--warn)}
+
+.card-bd{padding:16px 20px;gap:12px}
+#src{min-height:110px;height:150px}
+textarea.out{min-height:56px;height:72px}
+@media(min-width:900px){
+  .work{display:grid;grid-template-columns:minmax(0,5fr) minmax(0,7fr);grid-auto-rows:minmax(calc(100vh - 128px),auto);align-items:stretch;gap:16px}
+  .work>.panel{display:flex;flex-direction:column;min-height:0}
+  .work>.panel .card-bd{flex:1;min-height:0}
+  .work #src{flex:1;height:auto;min-height:200px;resize:none}
+  .work textarea.out{flex:none;height:220px}
+  .work iframe{flex:1;height:auto;min-height:260px}
+}
+.empty{border:2px dashed var(--line);border-radius:12px;padding:40px 16px;text-align:center;color:var(--faint)}
+iframe{width:100%;height:320px;transition:height .15s;border:2px solid var(--line);border-radius:12px;background:#fff}
+
+.toast{position:fixed;left:50%;bottom:28px;transform:translateX(-50%);background:#fff;color:var(--ok);border:2px solid var(--ok);padding:8px 20px;border-radius:1000px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .25s;white-space:nowrap;box-shadow:var(--shadow);z-index:50}
+.toast.show{opacity:1}
+</style>
+</head>
+<body>
+<header>
+  <div class="hd">
+    <div class="brandwrap">
+      <div class="mark"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15a2 2 0 0 1-2 2H8l-5 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/><path d="M9 9h6M9 13h4"/></svg></div>
+      <div class="brand"><b>QA 轉 HTML</b><small>FAQ ACCORDION</small></div>
+    </div>
+    <span class="local">資料只在這台電腦處理，不會上傳</span>
+  </div>
+</header>
+
+<main>
+  <aside>
+    <div class="panel">
+      <div class="sec">
+        <div class="sec-t">品牌配色 <span class="sec-en">BRAND</span></div>
+        <div class="chips" style="margin-top:12px" id="chips"></div>
+        <div class="hint" id="brandHint"></div>
+        <details class="adv"><summary>調整顏色／儲存品牌</summary>
+        <div class="lbl">設定品牌色（調完按「儲存顏色」）</div>
+        <div class="colors">
+          <label><input type="color" id="qc" value="#006D79">問題文字</label>
+          <label><input type="color" id="ic" value="#b71c22">＋ 符號</label>
+        </div>
+        <div class="save-row">
+          <input type="text" id="bname" placeholder="留空＝存到目前品牌；填名字＝新品牌">
+          <button class="btn sm" type="button" onclick="saveBrand()">儲存顏色</button>
+        </div>
+        <div class="btns" style="margin-top:8px"><button class="btn sm ghost" type="button" onclick="delBrand()">刪除目前品牌</button></div>
+        </details>
+      </div>
+      <div class="sec">
+        <div class="sec-t">展開符號 <span class="sec-en">ICON</span></div>
+        <div class="chips" id="symChips" style="margin-top:12px"></div>
+        <label class="sw" style="margin-top:12px"><input type="checkbox" id="noJs"><span class="sw-ui"></span>不用 JS 版（促銷賣場用）</label>
+        <details class="adv"><summary>更多設定（字體、標題、其他）</summary>
+        <div class="lbl">字體大小 px（留空＝沿用網站）</div>
+        <div class="colors">
+          <label style="flex-direction:column;align-items:stretch;gap:4px">標題<input type="text" id="fsT" value="20" inputmode="numeric"></label>
+          <label style="flex-direction:column;align-items:stretch;gap:4px">符號<input type="text" id="fsI" value="20" inputmode="numeric"></label>
+          <label style="flex-direction:column;align-items:stretch;gap:4px">問題<input type="text" id="fsQ" value="" inputmode="numeric"></label>
+          <label style="flex-direction:column;align-items:stretch;gap:4px">答案<input type="text" id="fsA" value="" inputmode="numeric"></label>
+        </div>
+        <label class="sw"><input type="checkbox" id="normP" checked><span class="sw-ui"></span>半形標點自動改全形（只動標點）</label>
+        <label class="sw"><input type="checkbox" id="numQ" checked><span class="sw-ui"></span>問題加編號（Q1、Q2…）</label>
+        <div class="lbl">自訂符號</div>
+        <div class="colors">
+          <label style="flex-direction:column;align-items:stretch;gap:4px">收合時<input type="text" id="symC" value="＋"></label>
+          <label style="flex-direction:column;align-items:stretch;gap:4px">展開時<input type="text" id="symO" value="−"></label>
+        </div>
+        <div class="lbl">標題文字</div>
+        <input type="text" id="title" value="常見問題｜Q&amp;A">
+        <label class="sw"><input type="checkbox" id="showTitle" checked><span class="sw-ui"></span>輸出標題</label>
+        <label class="sw"><input type="checkbox" id="withCss" checked><span class="sw-ui"></span>附帶 CSS 與 JS（可直接整段貼）</label>
+        <label class="sw"><input type="checkbox" id="firstOpen"><span class="sw-ui"></span>第一題預設展開</label>
+        <label class="sw"><input type="checkbox" id="autoCopy"><span class="sw-ui"></span>貼上後自動複製結果</label>
+        </details>
+      </div>
+    </div>
+  </aside>
+
+  <div class="work">
+    <section class="panel">
+      <div class="card-hd">
+        <span class="stn">1</span><span class="stp">貼上 Q&amp;A 文字</span>
+        <span class="pill" id="stat"></span>
+        <button class="btn ghost sm" type="button" onclick="clearAll()" style="margin-left:auto">清除</button>
+      </div>
+      <div class="card-bd">
+        <textarea id="src" placeholder="Q：問題一？&#10;A：答案一&#10;Q：問題二？&#10;A：答案第一行&#10;1. 條列也可以&#10;2. 會自動換行"></textarea>
+        <div class="notes" id="notes"></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="card-hd"><span class="stn">2</span><span class="stp">轉換結果</span><span class="pill" style="background:#fff;color:var(--mute);border-color:var(--line)">預覽可點問題展開</span>
+        <button class="btn pri sm" type="button" onclick="copyOut()" style="margin-left:auto">複製 HTML</button></div>
+      <div class="card-bd">
+        <textarea id="out" class="out" readonly placeholder="這裡會出現 HTML"></textarea>
+        <iframe id="pv"></iframe>
+      </div>
+    </section>
+  </div>
+</main>
+<div class="toast" id="toast"></div>
+
+<script>
+const $=id=>document.getElementById(id);
+const esc=s=>s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/®/g,'&reg;').replace(/…/g,'&hellip;');
+const attr=s=>s.replace(/</g,'&lt;').replace(/"/g,'&quot;');
+
+/* ---------- 智慧解析 ---------- */
+const QRE=/^[QＱ]\s*[\d０-９]*\s*[：:.．、)）]\s*|^問\s*[：:]\s*/i;
+const ARE=/^[AＡ]\s*[\d０-９]*\s*[：:.．、)）]\s*|^答\s*[：:]\s*/i;
+function parse(text,norm){
+  const items=[],fixes=new Set();
+  text=text.replace(/\r/g,'').replace(/[​﻿]/g,'');
+  if(/["“”]{2}/.test(text))fixes.add('原文有連續的 "" 符號，已照原樣保留，請自行確認');
+  const lastRaw=text.split('\n').filter(l=>l.trim()).pop();
+  let cur=null,mode=null;
+  for(const raw of text.split('\n')){
+    let line=raw.trim();
+    if(/^["“”]\s*(?=[QAＱＡ問答]\s*\d*\s*[：:.．、)）])/i.test(line)){line=line.replace(/^["“”]\s*/,'');fixes.add('已清掉前後多餘的引號');}
+    if(raw===lastRaw&&/["“”]$/.test(line)&&(line.match(/["“”]/g)||[]).length%2===1){line=line.replace(/["“”]$/,'').trim();fixes.add('已清掉前後多餘的引號');}
+    if(!line){if(cur&&mode==='a'&&cur.a.length&&cur.a[cur.a.length-1]!=='')cur.a.push('');continue;}
+    if(QRE.test(line)){
+      cur={q:line.replace(QRE,'').trim(),a:[]};items.push(cur);mode='q';
+    }else if(ARE.test(line)){
+      if(!cur){cur={q:'',a:[]};items.push(cur);}
+      const t=line.replace(ARE,'').trim();if(t)cur.a.push(t);mode='a';
+    }else if(cur){
+      if(mode==='q')cur.q+=line;else cur.a.push(line);
+    }
+  }
+  let changed=0;
+  const P={'?':'？','!':'！',',':'，',';':'；',':':'：',')':'）'};
+  const cjk=/[㐀-鿿　-〿＀-￯]/;
+  const normP=s=>{
+    let out='';
+    for(let i=0;i<s.length;i++){
+      const c=s[i],p=out.slice(-1),n=s[i+1]||'';
+      let r=c;
+      if(P[c]&&cjk.test(p)&&!(c===':'&&/\d/.test(n)))r=P[c];
+      else if(c==='('&&(cjk.test(n)||cjk.test(p)))r='（';
+      else if(c===')'&&!P[c])r=c;
+      if(r!==c)changed++;
+      out+=r;
+    }
+    return out;
+  };
+  items.forEach(it=>{
+    while(it.a.length&&it.a[it.a.length-1]==='')it.a.pop();
+    if(norm){it.q=normP(it.q);it.a=it.a.map(normP);}
+  });
+  if(changed)fixes.add(`已把 ${changed} 處半形標點統一成全形（只動標點，文字不變）`);
+  return {items:items.filter(i=>i.q||i.a.length),fixes:[...fixes]};
+}
+
+/* ---------- 品牌（含自動辨識） ---------- */
+const KEY='qa-brands-v2';
+const DEFAULTS={
+  '達摩本草':{qc:'#003b71',ic:'#b71c22',kw:['達摩本草','達摩']},
+  'PowerHero':{qc:'#006D79',ic:'#b71c22',kw:['powerhero','power hero','快充有神','PH ']},
+  '御熹堂':{qc:'#b71c22',ic:'#b71c22',kw:['御熹堂']}
+};
+let memBrands={};
+function userBrands(){let u={};try{u=JSON.parse(localStorage.getItem(KEY)||'{}')}catch(e){}return Object.assign({},u,memBrands)}
+function allBrands(){return Object.assign({},DEFAULTS,userBrands())}
+let cur='',locked=false;
+function detectBrand(text){
+  const t=text.toLowerCase();let best='',score=0;
+  for(const [n,b] of Object.entries(allBrands())){
+    const kws=(b.kw&&b.kw.length?b.kw:[n]).concat([n]);
+    let s=0;kws.forEach(k=>{const kk=k.toLowerCase();let i=-1;while((i=t.indexOf(kk,i+1))>=0)s++;});
+    if(s>score){score=s;best=n;}
+  }
+  return best;
+}
+function renderChips(){
+  const b=allBrands();
+  let h=`<button class="chip${!locked?' on':''}" type="button" data-b="">自動判斷</button>`;
+  h+=Object.entries(b).map(([n,v])=>`<button class="chip${locked&&cur===n?' on':''}" type="button" data-b="${attr(n)}"><span class="dots"><i style="background:${v.qc}"></i><i style="background:${v.ic}"></i></span>${esc(n)}</button>`).join('');
+  $('chips').innerHTML=h;
+  $('brandHint').textContent=locked?(cur?`已指定：${cur}`:'自訂顏色'):(cur?`已自動判斷為「${cur}」，可手動改選`:'偵測不到品牌，使用目前顏色');
+}
+$('chips').addEventListener('click',e=>{
+  const c=e.target.closest('.chip');if(!c)return;
+  const n=c.dataset.b;
+  if(!n){locked=false;autoBrand();}
+  else{locked=true;cur=n;const v=allBrands()[n];$('qc').value=v.qc;$('ic').value=v.ic;}
+  renderChips();build();
+});
+function autoBrand(){
+  if(locked)return;
+  const n=detectBrand($('src').value);
+  if(n){cur=n;const v=allBrands()[n];$('qc').value=v.qc;$('ic').value=v.ic;}
+  else cur='';
+}
+['qc','ic'].forEach(id=>$(id).addEventListener('input',()=>{locked=true;renderChips();build();}));
+function saveBrand(){
+  const n=$('bname').value.trim()||cur;
+  if(!n)return toast('請先選品牌或輸入新品牌名稱');
+  const u=userBrands();u[n]={qc:$('qc').value,ic:$('ic').value,kw:[n]};
+  let saved=true;
+  try{localStorage.setItem(KEY,JSON.stringify(u))}catch(e){saved=false;memBrands[n]=u[n];}
+  locked=true;cur=n;$('bname').value='';renderChips();toast(saved?'已儲存品牌：'+n:'已套用（此瀏覽器無法永久儲存，關閉後會消失）');
+}
+function delBrand(){
+  if(!cur)return toast('請先選一個品牌');
+  if(DEFAULTS[cur])return toast('內建品牌不能刪');
+  const u=userBrands();delete u[cur];delete memBrands[cur];
+  try{localStorage.setItem(KEY,JSON.stringify(u))}catch(e){}
+  toast('已刪除：'+cur);locked=false;cur='';autoBrand();renderChips();build();
+}
+
+/* ---------- 產生 HTML ---------- */
+const CSS=(C,O,FS)=>`<@@CM@@!-- CSS樣式 -->
+<style type="text/css">.accordion {
+  background-color: #fff;
+  border: 1px solid #ddd;
+  border-radius: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+  margin-bottom: 10px;
+  overflow: hidden;
+}
+.accordion-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px;
+  cursor: pointer;
+}
+.accordion-question {
+  font-weight: bold;
+  flex: 1;${FS.q?`
+  font-size: ${FS.q}px;`:''}
+}
+.accordion-toggle-icon {
+  font-size: ${FS.i}px;
+  margin-left: 10px;
+  flex-shrink: 0;
+}
+.accordion-content {
+  padding: 15px;
+  display: none;
+  line-height: 1.6;${FS.a?`
+  font-size: ${FS.a}px;`:''}
+}
+.accordion.open .accordion-content {
+  display: block;
+}
+</style>
+<@@CM@@!-- JS互動功能 --><script type="text/javascript">
+function toggleAccordion(element) {
+  const accordion = element.parentElement;
+  const icon = element.querySelector('.accordion-toggle-icon');
+  accordion.classList.toggle('open');
+  icon.textContent = accordion.classList.contains('open') ? "${O}" : "${C}";
+}
+<\/script>`;
+
+/* 預覽高度跟著內容走，展開收合時也同步，不出現內層捲軸 */
+function fitPv(){
+  try{
+    const f=$('pv'),d=f.contentDocument;if(!d||!d.body)return;
+    f.style.height=Math.max(160,d.documentElement.scrollHeight+4)+'px';
+  }catch(e){}
+}
+function renderNotes(notes){
+  const info=notes.filter(n=>!n[0]).map(n=>n[1]);
+  const rest=notes.filter(n=>n[0]);
+  let h=rest.map(([c,t])=>`<div class="note ${c}">${t}</div>`).join('');
+  if(info.length)h+=`<div class="note">${info.join('　·　')}</div>`;
+  $('notes').innerHTML=h;
+}
+let lastLen=0;
+function build(){
+  const {items,fixes}=parse($('src').value,$('normP').checked);
+  $('stat').textContent=items.length?`已辨識 ${items.length} 題`:'';
+  // 智慧提示
+  const notes=[];
+  if(!locked&&cur&&items.length)notes.push(['',`已自動套用品牌「<b>${esc(cur)}</b>」的配色`]);
+  fixes.forEach(f=>notes.push(['',esc(f)]));
+  const noA=items.map((x,i)=>[x,i+1]).filter(([x])=>!x.a.length).map(([,i])=>i);
+  const noQ=items.map((x,i)=>[x,i+1]).filter(([x])=>!x.q).map(([,i])=>i);
+  if(noA.length)notes.push(['warn',`第 <b>${noA.join('、')}</b> 題沒有答案，請檢查`]);
+  if(noQ.length)notes.push(['warn',`第 <b>${noQ.join('、')}</b> 題沒有問題文字，請檢查`]);
+  const seen={},dup=[];items.forEach((x,i)=>{if(!x.q)return;if(seen[x.q])dup.push(i+1);else seen[x.q]=1;});
+  if(dup.length)notes.push(['warn',`第 <b>${dup.join('、')}</b> 題的問題重複了`]);
+  if($('src').value.trim()&&!items.length)notes.push(['warn','沒有找到「Q：」開頭的問題，請確認格式']);
+  renderNotes(notes);
+
+  document.querySelector('.work').classList.toggle('has',items.length>0);
+  if(!items.length){$('out').value='';$('pv').srcdoc='';return;}
+  const SC=$('symC').value||'＋',SO=$('symO').value||'−';
+  const qc=$('qc').value,ic=$('ic').value,first=$('firstOpen').checked,num=$('numQ').checked;
+  const n=id=>{const v=parseInt($(id).value,10);return v>0?v:0};
+  const FS={q:n('fsQ'),a:n('fsA'),i:n('fsI')||20},tsz=n('fsT')||20;
+  let h='';
+  if($('showTitle').checked&&$('title').value.trim())
+    h+=`<div style="text-align: center; font-size: ${tsz}px; font-weight: bold; margin-bottom: 20px;">${esc($('title').value.trim())}</div>\n`;
+  const noJs=$('noJs').checked;
+  h+='<@@CM@@!-- FAQ 區塊開始 -->\n';
+  items.forEach((it,i)=>{
+    const open=first&&i===0;
+    if(noJs){
+      // 不用 JS 版：純 HTML 的 <details>，樣式全寫在標籤上，不需要 <style> 與 <script>
+      h+=`<@@CM@@!-- FAQ ${i+1} -->\n<details${open?' open':''} style="border: 1px solid #ddd; border-radius: 10px; margin-bottom: 10px; background: #fff; padding: 15px; overflow: hidden;">\n`+
+`<summary style="display: flex; justify-content: space-between; align-items: center; cursor: pointer; list-style: none;">\n<span class="accordion-question" style="flex: 1; font-weight: bold; color: ${qc};${FS.q?` font-size: ${FS.q}px;`:''}">${num?'Q'+(i+1):'Q'}：${esc(it.q)}</span>\n<span style="color: ${ic}; font-size: ${FS.i}px; margin-left: 10px; flex-shrink: 0;">${esc(SC)}</span>\n</summary>\n`+
+`<div class="accordion-content" style="margin-top: 12px; line-height: 1.6;${FS.a?` font-size: ${FS.a}px;`:''}">${it.a.map(esc).join('<br />\n')}</div>\n</details>\n`;
+      return;
+    }
+    h+=`<@@CM@@!-- FAQ ${i+1} -->\n<div class="accordion${open?' open':''}">\n`+
+`<div class="accordion-header" onclick="toggleAccordion(this)">\n<div class="accordion-question" style="color: ${qc};">${num?'Q'+(i+1):'Q'}：${esc(it.q)}</div>\n<div class="accordion-toggle-icon" style="color: ${ic};">${esc(open?SO:SC)}</div>\n</div>\n`+
+`<div class="accordion-content">${it.a.map(esc).join('<br />\n')}</div>\n</div>\n`;
+  });
+  h+='<@@CM@@!-- FAQ 區塊結束 -->';
+  if(!noJs&&$('withCss').checked)h+='\n'+CSS(SC,SO,FS);
+  $('out').value=h;
+  // 文字核對：原文與輸出，比對所有文字與數字（忽略標點、空白、Q/A 標記）
+  try{
+    const core=s=>(s.match(/[\p{L}\p{N}]/gu)||[]).join('');
+    const srcCore=core($('src').value.split('\n').map(l=>l.trim().replace(/^["“”]\s*(?=[QAＱＡ問答])/,'').replace(QRE,'').replace(ARE,'')).join(''));
+    const d=new DOMParser().parseFromString(h,'text/html');
+    const outCore=core([...d.querySelectorAll('.accordion-question,.accordion-content')].map(e=>e.textContent.replace(/^Q\d*：/,'')).join(''));
+    if(srcCore===outCore)notes.unshift(['ok','✓ 已核對：原文所有文字與數字都在，沒有增減']);
+    else notes.unshift(['warn','⚠ 文字核對不一致（原文 '+srcCore.length+' 字，輸出 '+outCore.length+' 字），請檢查']);
+    renderNotes(notes);
+  }catch(e){}
+  $('pv').srcdoc='<body style="font-family:sans-serif;margin:12px">'+h+(noJs||$('withCss').checked?'':CSS(SC,SO,FS));
+}
+function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('show'),1800)}
+function copyText(t,msg){
+  const done=()=>toast(msg||'已複製 HTML');
+  if(navigator.clipboard)navigator.clipboard.writeText(t).then(done,()=>{$('out').select();document.execCommand('copy');done()});
+  else{$('out').select();document.execCommand('copy');done();}
+}
+function copyOut(){if(!$('out').value)return toast('還沒有內容');copyText($('out').value);}
+function download(){
+  if(!$('out').value)return toast('還沒有內容');
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([$('out').value],{type:'text/html'}));
+  a.download='faq.html';a.click();
+}
+function clearAll(){$('src').value='';locked=false;cur='';renderChips();build();}
+async function pasteClip(){
+  try{const t=await navigator.clipboard.readText();if(!t.trim())return toast('剪貼簿是空的');$('src').value=t;onSrc(true);}
+  catch(e){toast('瀏覽器擋住讀取，請直接在框內按 Ctrl+V');}
+}
+function onSrc(fromPaste){
+  autoBrand();renderChips();build();
+  if(fromPaste&&$('autoCopy').checked&&$('out').value)copyText($('out').value,'已轉換並複製');
+}
+$('src').addEventListener('input',()=>onSrc(false));
+$('src').addEventListener('paste',()=>setTimeout(()=>onSrc(true),0));
+const SYMS=[['＋','−'],['(+)','(−)'],['+','-'],['(一)','(一)'],['▼','▲']];
+function renderSyms(){
+  const c=$('symC').value,o=$('symO').value;
+  $('symChips').innerHTML=SYMS.map(([a,b],i)=>'<button class="chip'+(a===c&&b===o?' on':'')+'" type="button" data-i="'+i+'">'+esc(a)+' / '+esc(b)+'</button>').join('');
+}
+$('symChips').addEventListener('click',e=>{const c=e.target.closest('.chip');if(!c)return;const s=SYMS[c.dataset.i];$('symC').value=s[0];$('symO').value=s[1];renderSyms();build();});
+['symC','symO'].forEach(id=>$(id).addEventListener('input',()=>{renderSyms();build();}));
+['title','withCss','noJs','showTitle','firstOpen','numQ','normP','fsT','fsI','fsQ','fsA'].forEach(id=>$(id).addEventListener('input',build));
+renderChips();renderSyms();build();
+<@@SC@@/script>
+</body>
+</html>
+</script>
+<script type="text/x-tpl" id="tpl-img"><!doctype html>
+<html lang="zh-Hant">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>圖片處理工具</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;500;700&display=swap">
+<style>
+:root{
+  --bg:#F6F7F9;--card:#fff;--line:#E3E6EA;--line-strong:#CBD0D7;--hover:#F3F4F6;
+  --ink:#1F2933;--ink-2:#4B5563;--mute:#6B7280;--faint:#9AA3AE;
+  --accent:#0066CC;--accent-h:#0A57AE;--accent-ink:#0C447C;--accent-line:#B5D4F4;--accent-soft:#F5F9FF;
+  --ok:#2E7D32;--ok-line:#BFE0C1;--warn:#C62828;--warn-line:#F2BDBD;
+  --shadow:0 2px 4px rgba(16,24,40,.04),0 8px 24px rgba(16,24,40,.06);
+  --lh-tight:1.2;--lh-title:1.35;--lh-body:1.7;
+  --ls-body:.02em;--ls-title:.08em;--ls-label:.2em;
+}
+*{box-sizing:border-box}
+html,body{margin:0}
+body{font-family:"Noto Sans TC","Microsoft JhengHei","PingFang TC",system-ui,sans-serif;background:var(--bg);color:var(--ink);font-size:14px;line-height:1.6;letter-spacing:var(--ls-body);word-break:keep-all;overflow-wrap:anywhere;-webkit-font-smoothing:antialiased}
+button,input,select,textarea{font:inherit;color:inherit;letter-spacing:inherit}
+button{cursor:pointer}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.ico{display:inline-flex;width:16px;height:16px;flex:none}
+.ico svg,.ib svg,.btn svg{width:100%;height:100%}
+.btn svg{width:16px;height:16px;flex:none}
+[hidden]{display:none!important}
+
+/* ===== 頁首 ===== */
+header{background:#fff;border-bottom:2px solid var(--line);position:sticky;top:0;z-index:20}
+.hd{max-width:1320px;margin:0 auto;padding:12px 24px;display:flex;align-items:center;gap:12px 24px;flex-wrap:wrap}
+.brandwrap{display:flex;align-items:center;gap:8px 12px;flex-wrap:wrap}
+.mark{width:40px;height:40px;border-radius:12px;background:var(--accent);color:#fff;display:grid;place-items:center;flex:none}
+.mark .ico{width:22px;height:22px}
+.brand b{display:block;font-size:22px;font-weight:700;line-height:var(--lh-title);letter-spacing:var(--ls-title);white-space:nowrap}
+.brand small{display:block;font-size:12px;font-weight:500;color:var(--faint);letter-spacing:var(--ls-label);line-height:var(--lh-tight);white-space:nowrap}
+.local{display:inline-flex;align-items:center;gap:6px;font-size:12px;color:var(--ink-2);border:2px solid var(--line);border-radius:1000px;padding:2px 10px;white-space:nowrap}
+.local .ico{width:14px;height:14px}
+.tabs{display:flex;gap:8px;margin-left:auto}
+.tab{display:inline-flex;align-items:center;gap:8px;height:40px;padding:0 18px;border:2px solid var(--line);background:#fff;border-radius:1000px;font-weight:500;color:var(--ink-2);white-space:nowrap}
+.tab:hover{background:var(--hover);color:var(--ink)}
+.tab.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
+
+/* ===== 版面 ===== */
+main{max-width:1320px;margin:0 auto;padding:24px;display:grid;grid-template-columns:minmax(0,1fr);gap:24px}
+@media(min-width:900px){
+  main{grid-template-columns:320px minmax(0,1fr);align-items:start}
+  aside{position:sticky;top:90px;max-height:calc(100vh - 114px);overflow:auto}
+}
+@media(width<900px){
+  header{position:static}
+  main{padding:16px;gap:16px}
+  .work{order:-1}
+}
+@media(max-width:600px){
+  .hd{padding:12px 16px}
+  .tabs{width:100%;margin-left:0}
+  .tab{flex:1;justify-content:center;padding:0 10px}
+}
+
+/* ===== 左側設定（可收合）===== */
+.panel{background:#fff;border:2px solid var(--line);border-radius:16px;box-shadow:var(--shadow)}
+.panel>.sec:not([hidden])~.sec{border-top:2px solid var(--line)}
+.sec-hd{width:100%;display:flex;align-items:center;flex-wrap:wrap;gap:4px 8px;padding:16px 20px;border:0;background:none;text-align:left;border-radius:14px}
+.sec-hd:hover{background:var(--hover)}
+.sec-hd .chev{color:var(--mute);transition:transform .15s}
+.sec.closed .chev{transform:rotate(-90deg)}
+.sec-t{font-size:16px;font-weight:700;letter-spacing:var(--ls-title);white-space:nowrap}
+.sec-en{font-size:12px;font-weight:500;color:var(--faint);letter-spacing:var(--ls-label);white-space:nowrap}
+.sec-sum{margin-left:auto;font-size:14px;color:var(--mute);white-space:nowrap}
+.sec-bd{padding:0 20px 20px}
+.sec.closed .sec-bd{display:none}
+
+.lbl{font-size:14px;font-weight:500;color:var(--ink-2);margin:16px 0 8px}
+.hint{font-size:14px;color:var(--mute);line-height:var(--lh-body);margin-top:10px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-top:12px}
+.unit{font-size:14px;color:var(--mute);white-space:nowrap}
+.val{min-width:44px;text-align:right;font-size:14px;font-weight:500;white-space:nowrap;font-variant-numeric:tabular-nums}
+.seg{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;border:2px solid var(--line);border-radius:10px;overflow:hidden;background:#fff}
+.seg button{height:36px;border:0;background:transparent;padding:0 6px;white-space:nowrap;color:var(--ink-2);font-size:14px}
+.seg button+button{border-left:2px solid var(--line)}
+.seg button:hover{background:var(--hover);color:var(--ink)}
+.seg button.on{background:var(--accent-soft);color:var(--accent-ink);font-weight:700;box-shadow:inset 0 0 0 2px var(--accent)}
+input[type=number],input[type=text],select,textarea{height:36px;border:2px solid var(--line);border-radius:8px;padding:0 10px;background:#fff;min-width:0}
+input[type=number]{width:96px;font-variant-numeric:tabular-nums}
+input[type=text]{width:140px}
+textarea{width:100%;height:auto;min-height:36px;padding:4px 10px;resize:vertical;line-height:1.6}
+input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent)}
+input[type=color]{width:44px;height:36px;padding:2px;border:2px solid var(--line);border-radius:8px;background:#fff;cursor:pointer}
+input[type=range]{flex:1;min-width:120px;accent-color:var(--accent)}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.chip{border:2px solid var(--line);background:#fff;border-radius:1000px;padding:2px 12px;font-size:14px;color:var(--ink-2);white-space:nowrap}
+.chip:hover{border-color:var(--line-strong);color:var(--ink)}
+.chip.on{border-color:var(--accent);background:var(--accent-soft);color:var(--accent-ink);font-weight:500}
+
+/* 開關 */
+.sw{display:flex;align-items:center;gap:10px;cursor:pointer;position:relative;line-height:var(--lh-title)}
+.sw input{position:absolute;opacity:0;width:0;height:0}
+.sw-ui{width:36px;height:20px;border-radius:1000px;background:#D1D5DB;position:relative;flex:none;transition:background .15s}
+.sw-ui::after{content:'';position:absolute;top:2px;left:2px;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 2px 4px rgba(0,0,0,.18);transition:transform .15s}
+.sw input:checked+.sw-ui{background:var(--accent)}
+.sw input:checked+.sw-ui::after{transform:translateX(16px)}
+.sw input:focus-visible+.sw-ui{outline:2px solid var(--accent);outline-offset:2px}
+.sw.mt{margin-top:14px}
+
+/* 快速套用 */
+.presets{display:grid;gap:8px}
+.preset{display:flex;align-items:center;gap:12px;border:2px solid var(--line);background:#fff;border-radius:12px;padding:10px 12px;text-align:left}
+.preset:hover{border-color:var(--line-strong);background:var(--hover)}
+.preset.on{border-color:var(--accent);background:var(--accent-soft)}
+.preset .pi{width:36px;height:36px;border-radius:10px;background:var(--hover);display:grid;place-items:center;flex:none;color:var(--ink)}
+.preset.on .pi{background:var(--accent);color:#fff}
+.preset .pi .ico{width:18px;height:18px}
+.preset b{display:block;font-size:14px;font-weight:700;line-height:var(--lh-title)}
+.preset .pt>span{display:block;font-size:14px;color:var(--mute);line-height:var(--lh-title);margin-top:2px}
+.preset .pi img{width:100%;height:100%;object-fit:contain;border-radius:8px;background:#fff}
+.preset .pt{min-width:0}
+.kbq{margin-top:14px}
+.adv{display:block;width:100%;text-align:left;background:none;border:0;border-top:2px solid var(--line);padding:16px 20px;font:inherit;font-size:14px;font-weight:700;color:var(--ink-2);letter-spacing:var(--ls-title);cursor:pointer}
+.adv:hover{background:var(--bg,#f7f8fa)}
+.adv .tg{float:right;color:var(--accent);font-weight:700;white-space:nowrap}
+.pdfbox{background:#fff;border:2px solid var(--line);border-radius:16px;padding:16px 20px;display:flex;flex-direction:column;gap:12px}
+.pdfsub{font-size:14px;font-weight:400;color:var(--mute);margin-left:12px;white-space:normal}
+.pdfrow{display:flex;gap:12px;align-items:center;flex-wrap:wrap}
+.pdfrow .unit{min-width:64px;white-space:nowrap}
+.pdfrow .seg{flex:0 1 auto}
+.stn{display:inline-grid;place-items:center;width:22px;height:22px;border-radius:50%;background:var(--accent);color:#fff;font-size:12px;font-style:normal;font-weight:700;margin-right:8px;flex:none}
+.stp{font-size:16px;font-weight:700;color:var(--ink);display:flex;align-items:center;white-space:nowrap}
+@media(width<900px){.stn{display:none}}
+.adv>span:not(.tg){display:block;font-size:12px;font-weight:400;color:var(--mute);letter-spacing:var(--ls-body);margin-top:2px}
+.plan{background:var(--accent-soft);border:2px solid var(--accent-line);border-radius:14px;padding:12px 16px;display:flex;align-items:center;gap:6px 10px;flex-wrap:wrap;font-size:14px;color:var(--ink-2);line-height:var(--lh-title)}
+.plan .pl{font-weight:700;color:var(--accent-ink);white-space:nowrap}
+.plan .st{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.plan .st b{color:var(--ink);font-weight:700}
+.plan .ar{color:var(--faint)}
+.mine{margin-top:16px;padding-top:14px;border-top:2px dashed var(--line)}
+.mine .lbl{margin:0 0 8px}
+.mine .lbl{cursor:pointer;display:flex;justify-content:space-between;font-weight:700;user-select:none}
+.mine .lbl::after{content:'展開 ▾';color:var(--accent);font-weight:700}
+.mine:not(.closed) .lbl::after{content:'收起 ▴'}
+.mine.closed>:not(.lbl){display:none}
+.mine.closed .lbl{margin:0}
+.sec[data-sec=preset] .presets:not(#myList) .pt>span{display:none}
+.sec[data-sec=preset] .presets:not(#myList) .preset{padding:8px 12px}
+.sec[data-sec=preset] .presets:not(#myList){gap:6px}
+.mine-empty{margin:0 0 10px;font-size:14px;color:var(--mute);line-height:var(--lh-body)}
+.mine #myList{margin-bottom:10px}
+.mine #myList:empty{display:none}
+.uprow{display:flex;align-items:center;gap:4px}
+.uprow .preset{flex:1;min-width:0}
+.uprow .ib{border-color:transparent;background:transparent;color:var(--faint)}
+.uprow .ib:hover{border-color:var(--warn-line);background:#fff;color:var(--warn)}
+.mine-form input{width:100%}
+.ferr{margin:6px 0 0;font-size:14px;color:var(--warn)}
+.mine-io{display:flex;justify-content:center;gap:4px;flex-wrap:wrap;margin-top:8px}
+
+/* 加工 */
+.xcard{border:2px solid var(--line);border-radius:12px;margin-top:10px}
+.xcard:first-child{margin-top:0}
+.xcard.on{border-color:var(--line-strong)}
+.xhd{padding:12px}
+.xhd .xt{font-weight:500;flex:1}
+.xhd .ico{color:var(--mute)}
+.xbd{border-top:2px solid var(--line);padding:4px 12px 14px}
+.xbd .row{flex-wrap:nowrap}
+.xbd input[type=range]{min-width:64px}
+.asset{height:36px;max-width:96px;object-fit:contain;border:2px solid var(--line);border-radius:8px;background:repeating-conic-gradient(#EEF0F2 0 25%,#fff 0 50%) 0 0/12px 12px}
+.asset[src=""]{display:none}
+.pos{display:grid;grid-template-columns:repeat(3,32px);gap:4px}
+.pos button{width:32px;height:24px;border:2px solid var(--line);background:#fff;border-radius:6px;padding:0}
+.pos button:hover{border-color:var(--line-strong);background:var(--hover)}
+.pos button.on{background:var(--accent);border-color:var(--accent)}
+
+/* 拼圖版型 */
+.layouts{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.lay{border:2px solid var(--line);background:#fff;border-radius:10px;padding:6px;aspect-ratio:1}
+.lay svg{width:100%;height:100%;display:block}
+.lay svg rect{fill:#E5E7EB}
+.lay:hover{border-color:var(--line-strong)}
+.lay.on{border-color:var(--accent);background:var(--accent-soft)}
+.lay.on svg rect{fill:var(--accent)}
+
+/* ===== 按鈕 ===== */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:6px;height:36px;padding:0 14px;border:2px solid var(--line);background:#fff;border-radius:10px;font-weight:500;font-size:14px;color:var(--ink);white-space:nowrap}
+.btn:hover{background:var(--hover);border-color:var(--line-strong)}
+.btn.pri{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.pri:hover{background:var(--accent-h);border-color:var(--accent-h)}
+.btn.ghost{background:transparent;border-color:transparent;color:var(--ink-2)}
+.btn.ghost:hover{background:var(--hover);color:var(--ink)}
+.btn.sm{height:32px;padding:0 10px;border-radius:8px}
+.btn.full{width:100%}
+.btn.dark{background:var(--accent);border-color:var(--accent);color:#fff}
+.btn.dark:hover{background:var(--accent-h);border-color:var(--accent-h)}
+.btn:disabled,.ib:disabled{opacity:.4;cursor:not-allowed}
+.ib{width:32px;height:32px;display:inline-grid;place-items:center;padding:0;border:2px solid var(--line);background:#fff;border-radius:8px;color:var(--ink-2)}
+.ib svg{width:16px;height:16px}
+.ib:hover{background:var(--hover);border-color:var(--line-strong);color:var(--ink)}
+.ib.on{background:var(--accent-soft);border-color:var(--accent);color:var(--accent-ink)}
+.ib.danger:hover{color:var(--warn);border-color:var(--warn-line);background:#fff}
+
+/* ===== 工作區 ===== */
+.work{display:flex;flex-direction:column;gap:16px;min-width:0}
+.drop{border:2px dashed var(--line-strong);background:#fff;border-radius:16px;padding:40px 24px;text-align:center;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:10px;transition:border-color .15s,background .15s}
+.drop:hover{border-color:var(--faint);background:#FCFCFD}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.drop .ic{width:56px;height:56px;border-radius:16px;background:var(--hover);color:var(--ink);display:grid;place-items:center}
+.drop .ic .ico{width:28px;height:28px}
+.drop .dt b{display:block;font-size:18px;font-weight:700;letter-spacing:var(--ls-title);line-height:var(--lh-title)}
+.drop .dt p{margin:6px 0 0;font-size:14px;color:var(--mute);line-height:var(--lh-body)}
+.drop .dt .fmt{font-size:12px;color:var(--faint);margin-top:2px}
+.drop .p-compact{display:none}
+.drop.compact{flex-direction:row;text-align:left;padding:14px 20px;gap:16px}
+.drop.compact .ic{width:40px;height:40px;border-radius:12px}
+.drop.compact .ic .ico{width:20px;height:20px}
+.drop.compact .dt{flex:1;min-width:0}
+.drop.compact .dt b{font-size:16px}
+.drop.compact .dt p{margin-top:2px}
+.drop.compact .p-full,.drop.compact .fmt{display:none}
+.drop.compact .p-compact{display:block}
+
+.feats{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+@media(width<700px){.feats{grid-template-columns:minmax(0,1fr)}}
+.nw{white-space:nowrap}
+.feat{background:#fff;border:2px solid var(--line);border-radius:14px;padding:16px;display:flex;gap:12px;align-items:flex-start}
+.feat .fi{width:36px;height:36px;border-radius:10px;background:var(--hover);display:grid;place-items:center;flex:none;color:var(--ink)}
+.feat .fi .ico{width:18px;height:18px}
+.feat b{display:block;font-size:14px;font-weight:700;line-height:var(--lh-title)}
+.feat span{display:block;font-size:14px;color:var(--mute);line-height:var(--lh-body);margin-top:2px}
+.feat span.nw{display:inline;margin:0}
+
+/* 統計列 */
+.bar{position:sticky;top:90px;z-index:5;background:#fff;border:2px solid var(--line);border-radius:16px;padding:14px 20px;display:flex;align-items:center;gap:12px 24px;flex-wrap:wrap;box-shadow:var(--shadow);overflow:hidden}
+@media(width<900px){.bar{top:0}}
+.stats{display:flex;gap:8px 28px;flex-wrap:wrap}
+.stat{display:flex;flex-direction:column}
+.stat-l{font-size:12px;color:var(--mute);white-space:nowrap;line-height:var(--lh-title)}
+.stat-n{font-size:20px;font-weight:700;white-space:nowrap;line-height:var(--lh-title);font-variant-numeric:tabular-nums}
+.stat-n.warn{color:var(--warn)}
+.bar .acts{margin-left:auto;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.busy{display:inline-flex;align-items:center;gap:8px;font-size:14px;color:var(--ink-2);white-space:nowrap}
+.spin{width:16px;height:16px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--ink);animation:sp .8s linear infinite;flex:none}
+@keyframes sp{to{transform:rotate(360deg)}}
+.prog{position:absolute;left:0;right:0;bottom:0;height:4px}
+.prog i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
+
+/* 圖片卡片 */
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+.card{background:#fff;border:2px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;transition:border-color .15s,box-shadow .15s}
+.card:hover{border-color:var(--line-strong);box-shadow:var(--shadow)}
+.card.dragging{opacity:.4}
+.card.dropto{border-color:var(--accent)}
+.pv{position:relative;aspect-ratio:1/1;border-bottom:2px solid var(--line);background:repeating-conic-gradient(#F3F4F6 0 25%,#fff 0 50%) 0 0/16px 16px;cursor:zoom-in;overflow:hidden}
+.pv img{display:block;width:100%;height:100%;object-fit:contain}
+.pv .st{position:absolute;inset:0;display:none;flex-direction:column;align-items:center;justify-content:center;gap:8px;background:rgba(255,255,255,.72);font-size:14px;color:var(--ink-2)}
+.pv .st svg{width:28px;height:28px}
+.card.wait .st,.card.run .st,.card.err .st{display:flex}
+.card.err .st{background:#fff;color:var(--warn)}
+.card.err .pv{cursor:default}
+.pv .hov{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);background:rgba(31,41,51,.82);color:#fff;font-size:12px;padding:4px 10px;border-radius:1000px;white-space:nowrap;opacity:0;transition:opacity .15s;pointer-events:none}
+.card.done .pv:hover .hov{opacity:1}
+.cb{padding:12px 14px 4px;display:flex;flex-direction:column;gap:6px;flex:1}
+.cn{font-size:14px;font-weight:700;line-height:var(--lh-title)}
+.cm{display:flex;flex-direction:column;gap:2px;font-size:14px;color:var(--mute);line-height:var(--lh-title);font-variant-numeric:tabular-nums}
+.cm b{color:var(--ink);font-weight:700}
+.cm .orig{font-size:12px;color:var(--faint)}
+.badges{display:flex;gap:6px;flex-wrap:wrap}
+.bd{font-size:12px;font-weight:500;line-height:20px;border:2px solid;border-radius:1000px;padding:0 8px;background:#fff}
+.bd.ok{color:var(--ok);border-color:var(--ok-line)}
+.bd.save{color:var(--accent-ink);border-color:var(--accent-line)}
+.bd.warn{color:var(--warn);border-color:var(--warn-line)}
+.bd.info{color:var(--ink-2);border-color:var(--line)}
+.errmsg{margin:0;font-size:14px;color:var(--warn);line-height:var(--lh-body)}
+.cf{display:flex;align-items:center;gap:6px;padding:10px 14px 14px}
+.cf .btn{margin-left:auto}
+.card{container-type:inline-size}
+@container (width<260px){.cf .btn{width:32px;padding:0}.cf .btn .t{display:none}}
+@container (width<200px){.cf [data-a=cmp]{display:none}}
+@media(max-width:600px){
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+  .cb{padding:10px 10px 2px}
+  .cm{font-size:12px}
+  .cf{padding:8px 10px 10px;gap:4px}
+  .cf .btn{width:32px;padding:0}
+  .cf .btn .t{display:none}
+  .stats{gap:8px 20px}
+  .bar{position:static}
+  .stat-n{font-size:18px}
+}
+
+/* 拼圖 */
+.stage{background:#fff;border:2px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;align-items:center;gap:16px;box-shadow:var(--shadow)}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.cvwrap{position:relative;width:100%;max-width:640px;box-shadow:0 0 0 2px var(--line);border-radius:4px;overflow:hidden}
+.cvwrap canvas{display:block;width:100%;height:auto}
+.cell{position:absolute;display:flex;align-items:center;justify-content:center;border:2px dashed transparent;transition:border-color .1s,background .1s}
+.cell.empty{border-color:var(--line-strong);background:rgba(255,255,255,.6);color:var(--mute);font-size:14px;cursor:pointer}
+.cell.empty .ce{display:inline-flex;align-items:center;gap:6px;white-space:nowrap}
+.cell.empty .ce svg{width:16px;height:16px}
+.cell.empty:hover{border-color:var(--faint);background:rgba(243,244,246,.85);color:var(--ink)}
+.cell.over{border-color:var(--accent)!important;background:rgba(0,102,204,.08)!important}
+.cell.filled{cursor:grab}
+.cell.filled:hover{border:2px solid var(--ink)}
+.cell .cx{position:absolute;top:6px;right:6px;display:none;gap:4px}
+.cell.filled:hover .cx{display:flex}
+.cell .cx button{width:28px;height:28px;border-radius:50%;border:0;padding:6px;background:rgba(31,41,51,.82);color:#fff;display:grid;place-items:center}
+.cell .cx button svg{width:16px;height:16px}
+.cell .cx button:hover{background:#000}
+.cell .cx button.on{background:#fff;color:var(--ink)}
+.cell .cadj{position:absolute;left:6px;bottom:6px;font-size:12px;line-height:20px;background:rgba(31,41,51,.82);color:#fff;padding:0 8px;border-radius:1000px;white-space:nowrap;pointer-events:none}
+.tip{margin:0;font-size:14px;color:var(--mute);text-align:center;line-height:var(--lh-body)}
+.dlrow{display:flex;flex-direction:column;align-items:center;gap:8px}
+.cres{font-size:14px;color:var(--ink-2);display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center}
+
+/* 視窗 */
+.modal{position:fixed;inset:0;background:rgba(17,24,39,.6);z-index:50;display:none;align-items:center;justify-content:center;padding:16px}
+.modal.on{display:flex}
+.mbox{background:#fff;border-radius:16px;width:100%;max-width:min(1000px,100%);max-height:100%;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 16px 48px rgba(0,0,0,.24)}
+.mhd{display:flex;align-items:center;gap:8px 12px;padding:12px 16px;border-bottom:2px solid var(--line);flex-wrap:wrap}
+.mhd b{flex:1;min-width:120px;font-size:16px;line-height:var(--lh-title)}
+.mhd .seg{width:180px}
+.mbody{flex:1;overflow:auto;background:repeating-conic-gradient(#F3F4F6 0 25%,#fff 0 50%) 0 0/16px 16px}
+.cmp{position:relative;margin:0 auto;user-select:none;touch-action:none;cursor:ew-resize}
+.cmp img{display:block;width:100%;height:auto;pointer-events:none}
+.cmp .top{position:absolute;inset:0}
+.cmp .top img{width:100%;height:100%;object-fit:contain;background:#fff}
+.cmp .ln{position:absolute;top:0;bottom:0;width:2px;background:var(--accent);transform:translateX(-50%);pointer-events:none}
+.cmp .tg{position:absolute;top:10px;font-size:12px;background:rgba(31,41,51,.82);color:#fff;padding:2px 10px;border-radius:1000px;white-space:nowrap;pointer-events:none}
+.cmp .tg.tl{left:10px}.cmp .tg.tr{right:10px}
+.mft{padding:10px 16px;font-size:14px;color:var(--mute);border-top:2px solid var(--line);display:flex;gap:6px 20px;flex-wrap:wrap}
+.edbody{display:flex;justify-content:center;padding:16px;overflow:hidden;background:repeating-conic-gradient(#F3F4F6 0 25%,#fff 0 50%) 0 0/16px 16px}
+.edbody canvas{max-width:100%;max-height:calc(100vh - 260px);cursor:grab;touch-action:none;box-shadow:0 0 0 2px var(--accent)}
+.edbody canvas:active{cursor:grabbing}
+.edctl{padding:12px 16px 16px;border-top:2px solid var(--line)}
+.edctl .row:first-child{margin-top:0}
+/* 裁切／旋轉 */
+.crbody{display:flex;justify-content:center;align-items:center;padding:16px;overflow:hidden;min-height:120px;background:repeating-conic-gradient(#F3F4F6 0 25%,#fff 0 50%) 0 0/16px 16px}
+.crwrap{position:relative;line-height:0;touch-action:none;user-select:none;cursor:crosshair;box-shadow:0 0 0 2px var(--line-strong)}
+.crwrap canvas{display:block}
+.crshade{position:absolute;inset:0;overflow:hidden;pointer-events:none}
+.crshade div{position:absolute;box-shadow:0 0 0 4000px rgba(17,24,39,.55)}
+.crbox{position:absolute;outline:2px solid #fff;cursor:move;
+  background:linear-gradient(to right,transparent calc(33.33% - 2px),rgba(255,255,255,.5) calc(33.33% - 2px) 33.33%,transparent 33.33% calc(66.67% - 2px),rgba(255,255,255,.5) calc(66.67% - 2px) 66.67%,transparent 66.67%),
+  linear-gradient(to bottom,transparent calc(33.33% - 2px),rgba(255,255,255,.5) calc(33.33% - 2px) 33.33%,transparent 33.33% calc(66.67% - 2px),rgba(255,255,255,.5) calc(66.67% - 2px) 66.67%,transparent 66.67%)}
+.crbox i{position:absolute;width:16px;height:16px;background:#fff;border:2px solid var(--ink);border-radius:4px}
+.crbox i[data-h=nw]{left:-8px;top:-8px;cursor:nwse-resize}.crbox i[data-h=ne]{right:-8px;top:-8px;cursor:nesw-resize}
+.crbox i[data-h=sw]{left:-8px;bottom:-8px;cursor:nesw-resize}.crbox i[data-h=se]{right:-8px;bottom:-8px;cursor:nwse-resize}
+.crbox i[data-h=n]{left:calc(50% - 8px);top:-8px;cursor:ns-resize}.crbox i[data-h=s]{left:calc(50% - 8px);bottom:-8px;cursor:ns-resize}
+.crbox i[data-h=w]{top:calc(50% - 8px);left:-8px;cursor:ew-resize}.crbox i[data-h=e]{top:calc(50% - 8px);right:-8px;cursor:ew-resize}
+.crbox.lock i[data-h=n],.crbox.lock i[data-h=s],.crbox.lock i[data-h=w],.crbox.lock i[data-h=e]{display:none}
+.crtools{display:flex;gap:6px;flex-wrap:wrap}
+.crtools .lb{font-size:14px;color:var(--mute);white-space:nowrap;align-self:center;margin-right:2px}
+#crRatio{flex:1;min-width:0}
+#crRatio button{padding:0 2px}
+.crinfo{font-size:14px;color:var(--ink-2);white-space:nowrap;font-variant-numeric:tabular-nums}
+.crft{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+
+.toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 18px;border-radius:12px;font-size:14px;z-index:60;opacity:0;transition:opacity .2s;pointer-events:none;max-width:calc(100vw - 32px);text-align:center;box-shadow:0 8px 24px rgba(0,0,0,.18)}
+.toast.on{opacity:1}
+</style>
+</head>
+<body>
+<header>
+  <div class="hd">
+    <div class="brandwrap">
+      <div class="mark"><i class="ico" data-ic="image"></i></div>
+      <div class="brand"><b>圖片處理工具</b><small>IMAGE TOOL</small></div>
+      <span class="local" title="所有處理都在這台電腦的瀏覽器內完成，圖片不會上傳到任何地方"><i class="ico" data-ic="lock"></i>本機處理・不上傳</span>
+    </div>
+    <nav class="tabs">
+      <button class="tab on" data-tab="batch"><i class="ico" data-ic="layers"></i>批次壓縮／改尺寸</button>
+      <button class="tab" data-tab="collage"><i class="ico" data-ic="grid"></i>拼圖排版</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <aside class="panel" id="panel">
+    <section class="sec" data-sec="preset" data-for="batch">
+      <button class="sec-hd" type="button"><i class="ico chev" data-ic="chev"></i><span class="sec-t"><i class="stn">1</i>選要做什麼</span><span class="sec-en">TASK</span><span class="sec-sum" id="sum-preset"></span></button>
+      <div class="sec-bd">
+        <div class="presets">
+          <button class="preset" data-preset="cutwhite"><span class="pi"><i class="ico" data-ic="wand"></i></span><span class="pt"><b>去背成透明&nbsp;PNG</b><span>JPG&nbsp;去掉背景&nbsp;· 輸出&nbsp;PNG</span></span></button>
+          <button class="preset" data-preset="compress"><span class="pi"><i class="ico" data-ic="zip"></i></span><span class="pt"><b>壓縮圖檔</b><span>尺寸不變&nbsp;· 轉&nbsp;JPG&nbsp;· 壓到上限內</span></span></button>
+          <button class="preset" data-preset="product"><span class="pi"><i class="ico" data-ic="bag"></i></span><span class="pt"><b>置中補白・調整比例</b><span>放到指定比例＋補上白背景</span></span></button>
+          <button class="preset" id="goCollage" type="button"><span class="pi"><i class="ico" data-ic="grid"></i></span><span class="pt"><b>組合圖</b><span>多張圖拼成一張</span></span></button>
+          <button class="preset" data-preset="png2jpg"><span class="pi"><i class="ico" data-ic="convert"></i></span><span class="pt"><b>PNG 轉 JPG</b><span>尺寸不變&nbsp;· 透明處填白&nbsp;· 高畫質</span></span></button>
+          <button class="preset" data-preset="shrink"><span class="pi"><i class="ico" data-ic="shrink"></i></span><span class="pt"><b>大圖縮小</b><span>長邊&nbsp;1600&nbsp;· 比例不變&nbsp;· 壓到上限內</span></span></button>
+        </div>
+        <div class="row kbq" id="kbqRow"><span class="unit">每張不超過</span><input type="number" id="kbQuick" min="10" max="20000" step="10" aria-label="每張不超過幾 KB"><span class="unit">KB</span></div>
+        <div class="mine closed" id="mine">
+          <div class="lbl">我的常用設定</div>
+          <div class="presets" id="myList"></div>
+          <p class="mine-empty" id="myEmpty">把目前的尺寸、框、Logo、標籤存起來，下次一鍵套用。各品牌、各平台可以各存一組。</p>
+          <button class="btn sm full" id="myAdd" type="button"><i class="ico" data-ic="plus"></i>把目前設定存成常用</button>
+          <div class="mine-form" id="myForm" hidden>
+            <input type="text" id="myName" maxlength="30" placeholder="例如：御熹堂商品圖" aria-label="常用設定名稱">
+            <p class="ferr" id="myErr" hidden>請輸入名稱</p>
+            <p class="hint" id="myWhat"></p>
+            <div class="row"><button class="btn sm dark" id="mySave" type="button">儲存</button><button class="btn sm ghost" id="myCancel" type="button">取消</button></div>
+          </div>
+          <div class="mine-io">
+            <button class="btn sm ghost" id="myExport" type="button" title="把常用設定（含框、Logo）存成一個備份檔"><i class="ico" data-ic="dl"></i>匯出備份</button>
+            <button class="btn sm ghost" id="myImport" type="button" title="從備份檔把常用設定加回來"><i class="ico" data-ic="upload"></i>從備份匯入</button>
+            <input type="file" id="myImportIn" accept=".json,application/json" hidden>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <button class="adv" id="advBtn" type="button" data-for="batch">進階設定<span class="tg" id="advTg">展開 ▾</span><span>尺寸、框、Logo、標籤、輸出、檔名…上面選好就能用，需要細調再打開</span></button>
+
+    <section class="sec" data-sec="size" data-for="batch">
+      <button class="sec-hd" type="button"><i class="ico chev" data-ic="chev"></i><span class="sec-t">尺寸</span><span class="sec-en">SIZE</span><span class="sec-sum" id="sum-size"></span></button>
+      <div class="sec-bd">
+        <div class="seg" data-k="sizeMode"><button data-v="fixed">固定尺寸</button><button data-v="max">限制長邊</button><button data-v="none">不改尺寸</button></div>
+        <div id="fixedBox">
+          <div class="row"><input type="number" id="fw" min="16" max="8000" step="2" aria-label="寬度"><span class="unit">×</span><input type="number" id="fh" min="16" max="8000" step="2" aria-label="高度"><span class="unit">px</span></div>
+          <div class="chips" id="fixedChips">
+            <button class="chip" data-wh="1000,1000">1000×1000</button>
+            <button class="chip" data-wh="800,800">800×800</button>
+            <button class="chip" data-wh="1200,1200">1200×1200</button>
+            <button class="chip" data-wh="1080,1350">1080×1350</button>
+            <button class="chip" data-wh="1200,628">1200×628</button>
+          </div>
+          <div class="lbl">比例不同時</div>
+          <div class="seg" data-k="fit"><button data-v="contain">補白置中</button><button data-v="cover">裁切填滿</button></div>
+          <div id="containBox">
+            <label class="sw mt"><input type="checkbox" id="trim"><span class="sw-ui"></span><span>先去掉原圖白邊，再置中</span></label>
+            <div class="row"><span class="unit">四周留白</span><input type="range" id="pad" min="0" max="20" step="1"><span id="padV" class="val">0%</span></div>
+          </div>
+          <div class="hint">卡片上的移動圖示，可以手動調整每張圖的位置和大小。</div>
+        </div>
+        <div id="maxBox">
+          <div class="row"><span class="unit">最長邊不超過</span><input type="number" id="maxEdge" min="16" max="8000" step="2"><span class="unit">px</span></div>
+          <div class="chips" id="maxChips">
+            <button class="chip" data-v="800">800</button><button class="chip" data-v="1000">1000</button><button class="chip" data-v="1200">1200</button><button class="chip" data-v="1600">1600</button><button class="chip" data-v="2000">2000</button>
+          </div>
+          <div class="hint">比這個小的圖不會被放大。</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec" data-sec="layout" data-for="collage" hidden>
+      <button class="sec-hd" type="button"><i class="ico chev" data-ic="chev"></i><span class="sec-t">版型</span><span class="sec-en">LAYOUT</span><span class="sec-sum" id="sum-layout"></span></button>
+      <div class="sec-bd"><div class="layouts" id="layouts"></div></div>
+    </section>
+
+    <section class="sec" data-sec="canvas" data-for="collage" hidden>
+      <button class="sec-hd" type="button"><i class="ico chev" data-ic="chev"></i><span class="sec-t">畫布</span><span class="sec-en">CANVAS</span><span class="sec-sum" id="sum-canvas"></span></button>
+      <div class="sec-bd">
+        <div class="row" style="margin-top:0"><input type="number" id="cw" min="100" max="8000" step="2" aria-label="畫布寬度"><span class="unit">×</span><input type="number" id="ch" min="100" max="8000" step="2" aria-label="畫布高度"><span class="unit">px</span></div>
+        <div class="chips" id="cChips">
+          <button class="chip" data-wh="1000,1000">1000×1000</button>
+          <button class="chip" data-wh="1200,1200">1200×1200</button>
+          <button class="chip" data-wh="1080,1350">1080×1350</button>
+          <button class="chip" data-wh="1200,628">1200×628</button>
+        </div>
+        <div class="row"><span class="unit">圖片間距</span><input type="range" id="gap" min="0" max="60" step="2"><span id="gapV" class="val">0px</span></div>
+        <div class="row"><span class="unit">外框留白</span><input type="range" id="margin" min="0" max="80" step="2"><span id="marginV" class="val">0px</span></div>
+        <div class="row"><span class="unit">背景顏色</span><input type="color" id="cbg" aria-label="背景顏色"></div>
+        <div class="lbl">圖片放進格子的方式</div>
+        <div class="seg" data-k="cfit"><button data-v="cover">裁切填滿</button><button data-v="contain">完整顯示</button></div>
+      </div>
+    </section>
+
+    <section class="sec" data-sec="cut">
+      <button class="sec-hd" type="button"><i class="ico chev" data-ic="chev"></i><span class="sec-t">去背</span><span class="sec-en">REMOVE BG</span><span class="sec-sum" id="sum-cut"></span></button>
+      <div class="sec-bd">
+        <label class="sw"><input type="checkbox" id="cutOn"><span class="sw-ui"></span><span>自動去掉背景</span></label>
+        <div id="cutBox">
+          <div class="row"><span class="unit">容許色差</span><input type="range" id="cutTol" min="4" max="80" step="2"><span id="cutTolV" class="val"></span></div>
+          <label class="sw mt"><input type="checkbox" id="cutSoft"><span class="sw-ui"></span><span>邊緣柔化（去掉白邊毛邊）</span></label>
+          <label class="sw mt"><input type="checkbox" id="cutHoles"><span class="sw-ui"></span><span>被包住的背景也去掉（白色商品別開）</span></label>
+          <div class="lbl">商品底下的影子</div>
+          <div class="seg" data-k="cutShadow"><button data-v="keep">保留原樣</button><button data-v="soft">變淡影</button><button data-v="remove">去掉</button></div>
+          <div class="hint">白底&nbsp;JPG&nbsp;選「保留原樣」。透明&nbsp;PNG&nbsp;要放彩色底時，選<span class="nw">「變淡影」或「去掉」</span>，淺灰色商品要留意會不會被一起變淡。</div>
+          <div class="hint">背景沒去乾淨就把色差調大，商品被吃掉就調小。白色商品放白底也可以用。</div>
+          <div class="hint">輸出&nbsp;PNG／WebP&nbsp;是透明背景；輸出&nbsp;JPG&nbsp;會填成「透明處填色」，可以把米白底、灰底換成純白底。</div>
+        </div>
+        <div class="hint" id="cutOffHint">白底、灰底、單色底的商品圖，打開就會自動把背景去掉。</div>
+      </div>
+    </section>
+
+    <section class="sec" data-sec="extras">
+      <button class="sec-hd" type="button"><i class="ico chev" data-ic="chev"></i><span class="sec-t">加工</span><span class="sec-en">EXTRAS</span><span class="sec-sum" id="sum-extras"></span></button>
+      <div class="sec-bd">
+        <div class="xcard" id="frameCard">
+          <label class="sw xhd"><input type="checkbox" id="frameOn"><span class="sw-ui"></span><span class="xt">套商品框</span><i class="ico" data-ic="frame"></i></label>
+          <div class="xbd" id="frameBox">
+            <div class="row"><button class="btn sm" id="frameUp">上傳框（PNG）</button><img class="asset" id="frameThumb" src="" alt=""></div>
+            <div class="hint">框會拉滿整張圖、疊在最上層。框的尺寸最好跟輸出尺寸一樣，中間要挖空透明。</div>
+          </div>
+        </div>
+        <div class="xcard" id="logoCard">
+          <label class="sw xhd"><input type="checkbox" id="logoOn"><span class="sw-ui"></span><span class="xt">加 Logo／浮水印</span><i class="ico" data-ic="award"></i></label>
+          <div class="xbd" id="logoBox">
+            <div class="row"><button class="btn sm" id="logoUp">上傳 Logo</button><img class="asset" id="logoThumb" src="" alt=""></div>
+            <div class="lbl">位置</div><div class="pos" data-k="logoPos"></div>
+            <div class="row"><span class="unit">大小</span><input type="range" id="logoSize" min="4" max="60" step="1"><span id="logoSizeV" class="val"></span></div>
+            <div class="row"><span class="unit">不透明度</span><input type="range" id="logoOp" min="10" max="100" step="5"><span id="logoOpV" class="val"></span></div>
+            <div class="row"><span class="unit">離邊距離</span><input type="range" id="logoMargin" min="0" max="16" step="1"><span id="logoMarginV" class="val"></span></div>
+          </div>
+        </div>
+        <div class="xcard" id="labelCard">
+          <label class="sw xhd"><input type="checkbox" id="labelOn"><span class="sw-ui"></span><span class="xt">加文字標籤</span><i class="ico" data-ic="tag"></i></label>
+          <div class="xbd" id="labelBox">
+            <div class="row"><textarea id="labelText" rows="1" placeholder="輸入文字，按 Enter 可換行"></textarea></div>
+            <div class="chips" id="labelChips">
+              <button class="chip">買一送一</button><button class="chip">限時特價</button><button class="chip">新品上市</button><button class="chip">熱銷</button><button class="chip">組合價</button>
+            </div>
+            <div class="lbl">位置</div><div class="pos" data-k="labelPos"></div>
+            <div class="lbl">樣式</div>
+            <div class="seg" data-k="labelShape"><button data-v="pill">圓角</button><button data-v="rect">方角</button><button data-v="circle">圓形</button></div>
+            <div class="row"><span class="unit">底色</span><input type="color" id="labelBg" aria-label="標籤底色"><span class="unit">字色</span><input type="color" id="labelColor" aria-label="標籤字色"></div>
+            <div class="row"><span class="unit">字級</span><input type="range" id="labelSize" min="3" max="20" step="1"><span id="labelSizeV" class="val"></span></div>
+            <div class="row"><span class="unit">離邊距離</span><input type="range" id="labelMargin" min="0" max="16" step="1"><span id="labelMarginV" class="val"></span></div>
+          </div>
+        </div>
+        <input type="file" id="assetIn" accept="image/png,image/webp,image/jpeg" hidden>
+      </div>
+    </section>
+
+    <section class="sec" data-sec="output">
+      <button class="sec-hd" type="button"><i class="ico chev" data-ic="chev"></i><span class="sec-t">輸出</span><span class="sec-en">OUTPUT</span><span class="sec-sum" id="sum-output"></span></button>
+      <div class="sec-bd">
+        <div class="lbl" style="margin-top:0">格式</div>
+        <div class="seg" data-k="fmt"><button data-v="jpeg">JPG</button><button data-v="png">PNG</button><button data-v="webp">WebP</button><button data-v="keep">原格式</button></div>
+        <div class="row" id="bgRow"><span class="unit">透明處填色</span><input type="color" id="bg" aria-label="透明處填色"><span class="unit">JPG 不支援透明</span></div>
+        <label class="sw mt" id="alphaRow"><input type="checkbox" id="alpha"><span class="sw-ui"></span><span>PNG／WebP 保留透明背景</span></label>
+        <div class="lbl">壓縮方式</div>
+        <div class="seg" data-k="mode"><button data-v="limit">指定大小上限</button><button data-v="quality">指定品質</button></div>
+        <div id="limitBox">
+          <div class="row"><span class="unit">每張不超過</span><input type="number" id="kb" min="10" max="20000" step="10"><span class="unit">KB</span></div>
+          <div class="chips" id="kbChips">
+            <button class="chip" data-v="200">200KB</button><button class="chip" data-v="300">300KB</button><button class="chip" data-v="450">450KB</button><button class="chip" data-v="1000">1MB</button><button class="chip" data-v="2000">2MB</button>
+          </div>
+          <div class="hint">會自動找出符合大小的最高畫質。</div>
+        </div>
+        <div id="qualityBox">
+          <div class="row"><input type="range" id="q" min="10" max="100" step="1"><span id="qV" class="val">80</span></div>
+          <div class="hint">建議 75–90，數字越小檔案越小、畫質越差。</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="sec" data-sec="naming" data-for="batch">
+      <button class="sec-hd" type="button"><i class="ico chev" data-ic="chev"></i><span class="sec-t">檔名</span><span class="sec-en">NAME</span><span class="sec-sum" id="sum-naming"></span></button>
+      <div class="sec-bd">
+        <div class="seg" data-k="naming"><button data-v="keep">維持原名</button><button data-v="suffix">加後綴</button><button data-v="seq">流水號</button></div>
+        <div class="row" id="suffixRow"><span class="unit">原名＋</span><input type="text" id="suffix" aria-label="後綴"></div>
+        <div id="seqRow">
+          <div class="row"><span class="unit">前綴</span><input type="text" id="prefix" aria-label="前綴"></div>
+          <div class="row"><span class="unit">從</span><input type="number" id="seqStart" min="0" max="99999" aria-label="起始編號"><span class="unit">開始編號</span></div>
+          <div class="hint">依卡片順序編號，可以直接拖曳卡片調整順序。</div>
+        </div>
+        <div class="hint" id="nameEx"></div>
+      </div>
+    </section>
+  </aside>
+
+  <section class="work" id="wBatch">
+    <div class="plan" id="plan"></div>
+    <div class="stp"><i class="stn">2</i>放入圖片</div>
+    <div class="drop" id="drop" role="button" tabindex="0">
+      <div class="ic"><i class="ico" data-ic="upload"></i></div>
+      <div class="dt">
+        <b>把圖片拖到這裡</b>
+        <p class="p-full">或點一下選擇檔案，可以一次選多張、拖整個資料夾，也能 Ctrl+V 貼上</p>
+        <p class="p-compact">或點一下加入更多，也能 Ctrl+V 貼上</p>
+        <p class="fmt">支援 JPG・PNG・WebP・GIF・BMP</p>
+      </div>
+      <span class="btn">選擇檔案</span>
+    </div>
+    <input type="file" id="file" accept="image/*" multiple hidden>
+
+    <div class="feats" id="feats">
+      <div class="feat"><span class="fi"><i class="ico" data-ic="size"></i></span><div><b>改成固定尺寸</b><span>例如 1000×1000，可補白置中、裁切，或手動調整位置</span></div></div>
+      <div class="feat"><span class="fi"><i class="ico" data-ic="convert"></i></span><div><b>轉檔</b><span>PNG 轉 JPG、WebP，透明處自動填白</span></div></div>
+      <div class="feat"><span class="fi"><i class="ico" data-ic="zip"></i></span><div><b>壓到指定大小</b><span>例如 450KB 以下，自動找出最高畫質</span></div></div>
+      <div class="feat"><span class="fi"><i class="ico" data-ic="star"></i></span><div><b>框・Logo・標籤</b><span>批次套框、加浮水印、<span class="nw">加「買一送一」角標</span></span></div></div>
+      <div class="feat"><span class="fi"><i class="ico" data-ic="wand"></i></span><div><b>去背</b><span>白底、灰底一鍵去掉，輸出透明 PNG，或換成純白底</span></div></div>
+      <div class="feat"><span class="fi"><i class="ico" data-ic="crop"></i></span><div><b>裁切・旋轉・翻轉</b><span>每張可以自己裁、轉正、鏡像，也能一次套用到全部</span></div></div>
+    </div>
+
+    <div class="stp" id="stp3" hidden><i class="stn">3</i>確認成品，再下載</div>
+    <div class="bar" id="bar" hidden>
+      <div class="stats">
+        <div class="stat"><span class="stat-l">圖片</span><span class="stat-n" id="stCount">0</span></div>
+        <div class="stat"><span class="stat-l">檔案大小</span><span class="stat-n" id="stSize">—</span></div>
+        <div class="stat"><span class="stat-l" id="stSaveL">共省下</span><span class="stat-n" id="stSave">—</span></div>
+        <div class="stat" id="stOverWrap" hidden><span class="stat-l">超過大小</span><span class="stat-n warn" id="stOver">0</span></div>
+        <div class="stat" id="stErrWrap" hidden><span class="stat-l">無法讀取</span><span class="stat-n warn" id="stErr">0</span></div>
+      </div>
+      <div class="acts">
+        <span class="busy" id="busy" hidden><span class="spin"></span><span id="busyT">處理中</span></span>
+        <button class="btn ghost" id="clearBtn">清空</button>
+        <button class="btn" id="pdfBtn" title="把這些圖片合併成一份 PDF"><i class="ico" data-ic="zip"></i>轉成 PDF</button>
+        <button class="btn" id="dirBtn" title="直接存進電腦裡的資料夾，不用解壓縮（同名檔案不會被覆蓋）" hidden><i class="ico" data-ic="folder"></i>存到資料夾</button>
+        <button class="btn pri" id="zipBtn"><i class="ico" data-ic="dl"></i><span id="zipT">打包下載</span></button>
+      </div>
+      <div class="prog" id="prog" hidden><i id="progBar"></i></div>
+    </div>
+
+    <div class="pdfbox" id="pdfBox" hidden>
+      <div class="stp">圖片轉 PDF<span class="pdfsub">照目前排列順序合併成一份，可拖卡片調順序</span></div>
+      <div class="pdfrow"><span class="unit">頁面大小</span><div class="seg" data-pdf="size"><button data-v="fit">符合圖片</button><button data-v="a4">A4</button><button data-v="letter">Letter</button></div></div>
+      <div class="pdfrow"><span class="unit">方向</span><div class="seg" data-pdf="orient"><button data-v="auto">自動</button><button data-v="p">直式</button><button data-v="l">橫式</button></div></div>
+      <div class="pdfrow"><span class="unit">邊距</span><div class="seg" data-pdf="margin"><button data-v="0">無</button><button data-v="20">小</button><button data-v="50">大</button></div></div>
+      <div class="pdfrow"><button class="btn pri" id="pdfGo" type="button"><i class="ico" data-ic="dl"></i>合併成 PDF 下載</button><button class="btn ghost" id="pdfCancel" type="button">取消</button></div>
+    </div>
+
+    <div class="grid" id="list"></div>
+  </section>
+
+  <section class="work" id="wCollage" hidden>
+    <div class="stage">
+      <div class="toolbar">
+        <button class="btn" id="cAdd"><i class="ico" data-ic="plus"></i>加入圖片</button>
+        <button class="btn" id="cSame"><i class="ico" data-ic="copy"></i>第一張複製到所有格</button>
+        <button class="btn ghost" id="cClear">清空拼圖</button>
+      </div>
+      <div class="cvwrap" id="cvwrap"><canvas id="cv"></canvas><div id="cells"></div></div>
+      <p class="tip">點空格放圖、把檔案直接拖進格子，或拖動格子裡的圖互換位置；雙擊格子可以調整位置和縮放。</p>
+      <div class="dlrow">
+        <button class="btn pri" id="cDl"><i class="ico" data-ic="dl"></i>下載拼圖</button>
+        <div class="cres" id="cres"></div>
+      </div>
+    </div>
+    <input type="file" id="cfile" accept="image/*" multiple hidden>
+    <input type="file" id="cfile1" accept="image/*" hidden>
+  </section>
+</main>
+
+<div class="modal" id="modal">
+  <div class="mbox">
+    <div class="mhd">
+      <b id="mName"></b>
+      <div class="seg" id="mZoom"><button data-v="fit" class="on">符合視窗</button><button data-v="full">原尺寸</button></div>
+      <button class="ib" id="mClose" aria-label="關閉" title="關閉"><i class="ico" data-ic="x"></i></button>
+    </div>
+    <div class="mbody" id="mBody">
+      <div class="cmp" id="cmp">
+        <img id="mAfter" alt="">
+        <div class="top" id="mTop"><img id="mBefore" alt=""></div>
+        <div class="ln" id="mLn"></div>
+        <span class="tg tl">原圖</span>
+        <span class="tg tr">處理後</span>
+      </div>
+    </div>
+    <div class="mft" id="mFt"></div>
+  </div>
+</div>
+<div class="modal" id="ed">
+  <div class="mbox" style="max-width:720px">
+    <div class="mhd"><b id="edName">調整位置與大小</b><button class="ib" id="edCancel" aria-label="取消" title="取消"><i class="ico" data-ic="x"></i></button></div>
+    <div class="edbody"><canvas id="edCv"></canvas></div>
+    <div class="edctl">
+      <div class="row"><span class="unit">縮放</span><input type="range" id="edZ" min="20" max="400" step="1"><span id="edZV" class="val">100%</span></div>
+      <div class="row">
+        <span class="hint" style="margin:0">在圖上拖曳移動位置，滑鼠滾輪也可以縮放</span>
+        <span style="margin-left:auto;display:flex;gap:8px"><button class="btn" id="edReset">重設</button><button class="btn pri" id="edOk">套用</button></span>
+      </div>
+    </div>
+  </div>
+</div>
+<div class="modal" id="cr">
+  <div class="mbox" style="max-width:880px">
+    <div class="mhd"><b id="crName">裁切／旋轉</b><button class="ib" id="crCancel" aria-label="取消" title="取消"><i class="ico" data-ic="x"></i></button></div>
+    <div class="crbody" id="crBody"><div class="crwrap" id="crWrap"><canvas id="crCv"></canvas><div class="crshade"><div id="crHole"></div></div><div class="crbox" id="crBox"><i data-h="nw"></i><i data-h="n"></i><i data-h="ne"></i><i data-h="e"></i><i data-h="se"></i><i data-h="s"></i><i data-h="sw"></i><i data-h="w"></i></div></div></div>
+    <div class="edctl">
+      <div class="row">
+        <div class="crtools">
+          <button class="ib" id="crL" title="向左轉 90°" aria-label="向左轉 90°"><i class="ico" data-ic="rotL"></i></button>
+          <button class="ib" id="crR" title="向右轉 90°" aria-label="向右轉 90°"><i class="ico" data-ic="rotR"></i></button>
+          <button class="ib" id="crFx" title="左右翻轉" aria-label="左右翻轉"><i class="ico" data-ic="flipH"></i></button>
+          <button class="ib" id="crFy" title="上下翻轉" aria-label="上下翻轉"><i class="ico" data-ic="flipV"></i></button>
+        </div>
+        <div class="seg" id="crRatio"><button data-v="free">自由</button><button data-v="1:1">1:1</button><button data-v="4:3">4:3</button><button data-v="3:4">3:4</button><button data-v="16:9">16:9</button></div>
+      </div>
+      <div class="row">
+        <span class="crinfo" id="crInfo"></span>
+        <span class="crft"><button class="btn ghost" id="crReset">重設</button><button class="btn" id="crAll" title="每張都用一樣的旋轉、翻轉和裁切位置">套用到全部</button><button class="btn pri" id="crOk">套用</button></span>
+      </div>
+      <div class="hint">在圖上拖曳可以框出要留下的範圍，拖框內移動、拖角落調整大小。</div>
+    </div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+'use strict';
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+
+/* ---------- 圖示 ---------- */
+const svg=p=>`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${p}</svg>`;
+const IC={
+  image:svg('<rect x="3" y="3" width="18" height="18" rx="3"/><circle cx="9" cy="9" r="2"/><path d="m21 15-5-5L5 21"/>'),
+  lock:svg('<rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>'),
+  layers:svg('<path d="m12 2 10 5-10 5L2 7z"/><path d="m2 17 10 5 10-5"/><path d="m2 12 10 5 10-5"/>'),
+  grid:svg('<rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/>'),
+  chev:svg('<path d="m6 9 6 6 6-6"/>'),
+  upload:svg('<path d="M12 16V4"/><path d="m6 10 6-6 6 6"/><path d="M4 20h16"/>'),
+  dl:svg('<path d="M12 4v12"/><path d="m6 10 6 6 6-6"/><path d="M4 20h16"/>'),
+  move:svg('<path d="m5 9-3 3 3 3"/><path d="m9 5 3-3 3 3"/><path d="m15 19-3 3-3-3"/><path d="m19 9 3 3-3 3"/><path d="M2 12h20"/><path d="M12 2v20"/>'),
+  cmp:svg('<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M12 3v18"/>'),
+  trash:svg('<path d="M3 6h18"/><path d="M8 6V4h8v2"/><path d="m6 6 1 14h10l1-14"/>'),
+  x:svg('<path d="M18 6 6 18"/><path d="m6 6 12 12"/>'),
+  plus:svg('<path d="M12 5v14"/><path d="M5 12h14"/>'),
+  copy:svg('<rect x="9" y="9" width="12" height="12" rx="2"/><path d="M5 15V5a2 2 0 0 1 2-2h10"/>'),
+  refresh:svg('<path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/><path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/>'),
+  bag:svg('<path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"/><path d="M3 6h18"/><path d="M16 10a4 4 0 0 1-8 0"/>'),
+  convert:svg('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m9 15 2 2 4-4"/>'),
+  shrink:svg('<path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>'),
+  size:svg('<path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="m21 3-7 7"/><path d="m3 21 7-7"/>'),
+  zip:svg('<path d="M4 14h6v6"/><path d="M20 10h-6V4"/><path d="m14 10 7-7"/><path d="m3 21 7-7"/>'),
+  star:svg('<path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6-4.5-4.2 6.1-.7z"/>'),
+  frame:svg('<rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="7" width="10" height="10" rx="1"/>'),
+  award:svg('<circle cx="12" cy="8" r="6"/><path d="M8.2 13.9 7 22l5-3 5 3-1.2-8.1"/>'),
+  tag:svg('<path d="M20.6 13.4 13.4 20.6a2 2 0 0 1-2.8 0L2 12V2h10l8.6 8.6a2 2 0 0 1 0 2.8z"/><circle cx="7" cy="7" r="1.5"/>'),
+  alert:svg('<circle cx="12" cy="12" r="9"/><path d="M12 8v5"/><path d="M12 16h.01"/>'),
+  bookmark:svg('<path d="M19 21 12 17 5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z"/>'),
+  wand:svg('<path d="m14 6 4 4L7 21l-4-4z"/><path d="m11 9 4 4"/><path d="M19 2v4"/><path d="M21 4h-4"/>'),
+  crop:svg('<path d="M6 2v14a2 2 0 0 0 2 2h14"/><path d="M18 22V8a2 2 0 0 0-2-2H2"/>'),
+  rotL:svg('<path d="M3 12a9 9 0 1 0 3-6.7L3 8"/><path d="M3 3v5h5"/>'),
+  rotR:svg('<path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/>'),
+  flipH:svg('<path d="M12 3v18"/><path d="M8 7 3 17h5z"/><path d="M16 7l5 10h-5z"/>'),
+  flipV:svg('<path d="M3 12h18"/><path d="M7 8 17 3v5z"/><path d="M7 16l10 5v-5z"/>'),
+  folder:svg('<path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>'),
+};
+$$('[data-ic]').forEach(e=>{e.innerHTML=IC[e.dataset.ic]||''});
+
+/* ---------- 設定 ---------- */
+const DEF={sizeMode:'none',fw:1000,fh:1000,fit:'contain',trim:false,pad:0,maxEdge:1600,
+  fmt:'jpeg',bg:'#ffffff',alpha:true,mode:'limit',kb:450,q:85,
+  naming:'keep',suffix:'_1000',prefix:'商品',seqStart:1,
+  layout:'2h',cw:1000,ch:1000,gap:10,margin:10,cbg:'#ffffff',cfit:'cover',tab:'batch',
+  frameOn:false,logoOn:false,logoPos:'br',logoSize:20,logoOp:100,logoMargin:3,
+  cutOn:false,cutTol:30,cutSoft:true,cutHoles:false,cutShadow:'keep',
+  labelOn:false,labelText:'買一送一',labelPos:'tl',labelShape:'pill',labelBg:'#E0820A',labelColor:'#ffffff',labelSize:7,labelMargin:3,
+  open:{preset:true,size:false,layout:true,canvas:true,cut:false,extras:false,output:false,naming:false}};
+let S={...DEF};
+try{Object.assign(S,JSON.parse(localStorage.getItem('imgtool.settings')||'{}'))}catch(e){}
+S.open={...DEF.open,...(S.open||{})};
+// 改版：進階設定預設收起、去背關掉（舊版留下的設定會讓轉檔結果出乎意料）
+if(S.ui!==2){S.open={...DEF.open};S.cutOn=false;S.ui=2}
+function save(){try{localStorage.setItem('imgtool.settings',JSON.stringify(S))}catch(e){}}
+
+const toastEl=$('#toast');let toastT;
+function toast(m){toastEl.textContent=m;toastEl.classList.add('on');clearTimeout(toastT);toastT=setTimeout(()=>toastEl.classList.remove('on'),2600)}
+function fmtSize(b){return b>=1048576?(b/1048576).toFixed(2)+' MB':Math.max(1,Math.round(b/1024))+' KB'}
+function mk(w,h){const c=document.createElement('canvas');c.width=Math.max(1,Math.round(w));c.height=Math.max(1,Math.round(h));return c}
+function toBlob(c,type,q){return new Promise((res,rej)=>c.toBlob(b=>b?res(b):rej(new Error('encode')),type,q))}
+function esc(s){return s.replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+// 檔名只在底線、連字號、括號後面換行（副檔名不會被拆開）
+function wbr(s){return esc(s).replace(/([_\-（）()\s])/g,'$1<wbr>')}
+const EXT={'image/jpeg':'.jpg','image/png':'.png','image/webp':'.webp'};
+
+/* ---------- 影像處理核心 ---------- */
+// 大幅縮小時分段減半，避免鋸齒與摩爾紋
+function drawHQ(ctx,src,sx,sy,sw,sh,dx,dy,dw,dh){
+  let cur=src,cx=sx,cy=sy,cw=sw,ch=sh;
+  while(cw>dw*2&&ch>dh*2){
+    const nw=Math.round(cw/2),nh=Math.round(ch/2),c=mk(nw,nh),x=c.getContext('2d');
+    x.imageSmoothingQuality='high';x.drawImage(cur,cx,cy,cw,ch,0,0,nw,nh);
+    cur=c;cx=0;cy=0;cw=nw;ch=nh;
+  }
+  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+  ctx.drawImage(cur,cx,cy,cw,ch,dx,dy,dw,dh);
+}
+// 找出非白色／非透明的內容範圍
+function trimBox(bmp){
+  const s=Math.min(1,600/Math.max(bmp.width,bmp.height));
+  const w=Math.max(1,Math.round(bmp.width*s)),h=Math.max(1,Math.round(bmp.height*s));
+  const c=mk(w,h),x=c.getContext('2d',{willReadFrequently:true});x.drawImage(bmp,0,0,w,h);
+  const d=x.getImageData(0,0,w,h).data;
+  let x0=w,y0=h,x1=-1,y1=-1;
+  for(let y=0;y<h;y++)for(let i=0;i<w;i++){
+    const k=(y*w+i)*4;
+    if(d[k+3]<16)continue;
+    if(d[k]>240&&d[k+1]>240&&d[k+2]>240)continue;
+    if(i<x0)x0=i;if(i>x1)x1=i;if(y<y0)y0=y;if(y>y1)y1=y;
+  }
+  if(x1<0)return{x:0,y:0,w:bmp.width,h:bmp.height};
+  const iv=1/s;
+  const X0=Math.max(0,Math.floor((x0-1)*iv)),Y0=Math.max(0,Math.floor((y0-1)*iv));
+  const X1=Math.min(bmp.width,Math.ceil((x1+2)*iv)),Y1=Math.min(bmp.height,Math.ceil((y1+2)*iv));
+  return{x:X0,y:Y0,w:X1-X0,h:Y1-Y0};
+}
+/* ---------- 裁切／旋轉／翻轉、去背（處理前先套在原圖上）---------- */
+// e = {rot:0~3（順時針 90° 的次數）, fx/fy:左右／上下翻轉（以轉完的畫面為準）, crop:{x,y,w,h} 轉完後畫面的比例 或 null}
+function applyEdit(src,e){
+  if(!e)return src;
+  const W0=src.width,H0=src.height,odd=e.rot%2,tw=odd?H0:W0,th=odd?W0:H0,cr=e.crop||{x:0,y:0,w:1,h:1};
+  const cx=Math.min(tw-1,Math.round(cr.x*tw)),cy=Math.min(th-1,Math.round(cr.y*th));
+  const cw=Math.max(1,Math.min(tw-cx,Math.round(cr.w*tw))),ch=Math.max(1,Math.min(th-cy,Math.round(cr.h*th)));
+  const out=mk(cw,ch),x=out.getContext('2d');
+  x.translate(tw/2-cx,th/2-cy);x.scale(e.fx?-1:1,e.fy?-1:1);x.rotate(e.rot*Math.PI/2);
+  x.drawImage(src,-W0/2,-H0/2);
+  return out;
+}
+// 去背：取四周最多的顏色當背景色，從邊緣往內把相近的顏色挖掉（holes=true 時連被包住的同色區也挖）
+function cutBackground(src,tol,soft,holes,shadow,gt){
+  const w=src.width,h=src.height,n=w*h,c=mk(w,h),x=c.getContext('2d',{willReadFrequently:true});
+  x.drawImage(src,0,0);
+  const img=x.getImageData(0,0,w,h),d=img.data;
+  const edge=[];
+  for(let i=0;i<w;i++){edge.push(i);if(h>1)edge.push((h-1)*w+i)}
+  for(let y=1;y<h-1;y++){edge.push(y*w);if(w>1)edge.push(y*w+w-1)}
+  const cnt=new Map();
+  for(const p of edge){
+    const k=p*4;if(d[k+3]<16)continue;
+    const q=(d[k]>>4)<<8|(d[k+1]>>4)<<4|(d[k+2]>>4),e=cnt.get(q);
+    if(e){e[0]++;e[1]+=d[k];e[2]+=d[k+1];e[3]+=d[k+2]}else cnt.set(q,[1,d[k],d[k+1],d[k+2]]);
+  }
+  let best=null;for(const e of cnt.values())if(!best||e[0]>best[0])best=e;
+  if(!best)return c;// 四周本來就是透明的
+  const br=best[1]/best[0],bgc=best[2]/best[0],bb=best[3]/best[0],T2=tol*tol;
+  const dist2=k=>{const r=d[k]-br,g=d[k+1]-bgc,b=d[k+2]-bb;return r*r+g*g+b*b};
+  const isBg=p=>{const k=p*4;return d[k+3]<16||dist2(k)<=T2};
+  // 輪廓強度：先把亮度做 3×3 平均（壓掉 JPG 雜訊），再看左右、上下的亮度差
+  // 白色商品放白底時，顏色跟背景幾乎一樣，只能靠這圈淡淡的輪廓把商品圍住
+  const L=new Uint8Array(n),Bh=new Uint16Array(n),B=new Uint8Array(n),G=new Uint8Array(n);
+  for(let p=0,k=0;p<n;p++,k+=4)L[p]=(d[k]*77+d[k+1]*150+d[k+2]*29)>>8;
+  for(let y=0;y<h;y++){const o=y*w;for(let i=0;i<w;i++)Bh[o+i]=L[o+Math.max(0,i-1)]+L[o+i]+L[o+Math.min(w-1,i+1)]}
+  for(let y=0;y<h;y++){const a=Math.max(0,y-1)*w,b=y*w,c2=Math.min(h-1,y+1)*w;for(let i=0;i<w;i++)B[b+i]=(Bh[a+i]+Bh[b+i]+Bh[c2+i]+4)/9}
+  for(let y=0;y<h;y++){const o=y*w,up=Math.max(0,y-1)*w,dn=Math.min(h-1,y+1)*w;
+    for(let i=0;i<w;i++){const gx=Math.abs(B[o+Math.min(w-1,i+1)]-B[o+Math.max(0,i-1)]),gy=Math.abs(B[dn+i]-B[up+i]);G[o+i]=gx>gy?gx:gy}}
+  // 輪廓門檻依背景本身的雜訊自動決定：量四周 6px 內背景像素的輪廓強度（取 95% 的位置）
+  // 乾淨白底 → 門檻很低，連很淡的商品輪廓都擋得住；背景有紋理或雜訊 → 自動放寬
+  let gTol=gt;
+  if(gTol==null){
+    const hist=new Uint32Array(256),bw=Math.min(6,w>>2,h>>2);let cnt=0;
+    for(let y=0;y<h;y++){
+      const inRow=y<bw||y>=h-bw;
+      for(let i=0;i<w;i++){
+        if(!inRow&&i>=bw&&i<w-bw){i=w-bw-1;continue}
+        const p=y*w+i;if(isBg(p)){hist[G[p]]++;cnt++}
+      }
+    }
+    let acc=0,p95=0;for(let v=0;v<256;v++){acc+=hist[v];if(acc>=cnt*.95){p95=v;break}}
+    gTol=Math.max(3,Math.min(24,p95*1.5+1.5));
+  }
+  // 背景色模型：用四條邊上的背景色（平滑過）推算每個位置應有的背景色，越靠近哪條邊就越像那條邊
+  // 純色背景時跟原本一樣；上亮下暗的漸層背景也能整片去掉，而且不會順著影子滑進商品
+  const MR=new Uint8Array(n),MG=new Uint8Array(n),MB=new Uint8Array(n);
+  {
+    const lim=Math.max(90,tol*3),lim2=lim*lim;
+    const side=(len,at)=>{// at(i) → 像素位置；回傳平滑後的 [r,g,b] 陣列，沒有可用的背景就回傳 null
+      const ok=new Uint8Array(len),cr=new Float32Array(len),cg=new Float32Array(len),cb=new Float32Array(len);let any=false;
+      for(let i=0;i<len;i++){const p=at(i),k=p*4;if(d[k+3]<16||G[p]>gTol||dist2(k)>lim2)continue;ok[i]=1;cr[i]=d[k];cg[i]=d[k+1];cb[i]=d[k+2];any=true}
+      if(!any)return null;
+      const R=20,out=new Float32Array(len*3);
+      let last=-1;
+      for(let i=0;i<len;i++){
+        let sr=0,sg=0,sb=0,sn=0;
+        for(let j=Math.max(0,i-R);j<=Math.min(len-1,i+R);j++)if(ok[j]){sr+=cr[j];sg+=cg[j];sb+=cb[j];sn++}
+        if(sn){out[i*3]=sr/sn;out[i*3+1]=sg/sn;out[i*3+2]=sb/sn;last=i}else out[i*3]=-1;
+      }
+      // 中間一大段被商品擋住的地方，用最近的有效值補
+      for(let i=0;i<len;i++)if(out[i*3]<0){let j=1;while(true){if(i-j>=0&&out[(i-j)*3]>=0){out.set(out.subarray((i-j)*3,(i-j)*3+3),i*3);break}if(i+j<len&&out[(i+j)*3]>=0){out.set(out.subarray((i+j)*3,(i+j)*3+3),i*3);break}j++}}
+      return out;
+    };
+    const top=side(w,i=>i),bot=side(w,i=>(h-1)*w+i),lef=side(h,y=>y*w),rig=side(h,y=>y*w+w-1);
+    // 四條邊都一樣（純色背景）就不用逐點算
+    const flat=[top,bot,lef,rig].every(a=>!a||a.every((v,i)=>Math.abs(v-[br,bgc,bb][i%3])<2));
+    if(flat||!(top||bot||lef||rig)){MR.fill(Math.round(br));MG.fill(Math.round(bgc));MB.fill(Math.round(bb))}
+    else{
+      const inv=new Float32Array(Math.max(w,h)+1);for(let i=0;i<inv.length;i++)inv[i]=1/((i+1)*(i+1));
+      for(let y=0;y<h;y++){
+        const wt=top?inv[y]:0,wb=bot?inv[h-1-y]:0,ly=y*3;
+        for(let i=0;i<w;i++){
+          const wl=lef?inv[i]:0,wr=rig?inv[w-1-i]:0,sw=wt+wb+wl+wr,ix=i*3;
+          let r=0,g=0,b=0;
+          if(wt){r+=top[ix]*wt;g+=top[ix+1]*wt;b+=top[ix+2]*wt}
+          if(wb){r+=bot[ix]*wb;g+=bot[ix+1]*wb;b+=bot[ix+2]*wb}
+          if(wl){r+=lef[ly]*wl;g+=lef[ly+1]*wl;b+=lef[ly+2]*wl}
+          if(wr){r+=rig[ly]*wr;g+=rig[ly+1]*wr;b+=rig[ly+2]*wr}
+          const p=y*w+i;MR[p]=r/sw;MG[p]=g/sw;MB[p]=b/sw;
+        }
+      }
+    }
+  }
+  const mdist2=p=>{const k=p*4,r=d[k]-MR[p],g=d[k+1]-MG[p],b=d[k+2]-MB[p];return r*r+g*g+b*b};
+  const isBgM=p=>d[p*4+3]<16||mdist2(p)<=T2;
+  const canGo=p=>G[p]<=gTol&&isBgM(p);
+  const m=new Uint8Array(n);// 1 = 背景
+  if(holes){for(let p=0;p<n;p++)if(isBgM(p))m[p]=1}
+  else{
+    const st=new Int32Array(n);let sp=0;
+    for(const p of edge)if(!m[p]&&isBgM(p)){m[p]=1;st[sp++]=p}
+    while(sp){
+      const p=st[--sp],px=p%w;let q;
+      if(px>0&&!m[q=p-1]&&canGo(q)){m[q]=1;st[sp++]=q}
+      if(px<w-1&&!m[q=p+1]&&canGo(q)){m[q]=1;st[sp++]=q}
+      if(p>=w&&!m[q=p-w]&&canGo(q)){m[q]=1;st[sp++]=q}
+      if(p<n-w&&!m[q=p+w]&&canGo(q)){m[q]=1;st[sp++]=q}
+    }
+  }
+  // 影子（標成 2，只有選「變淡影」或「去掉」才做）：從背景往內，沿著「越往內越暗或持平、沒有顏色、變化平緩」的像素走
+  // 商品的輪廓線比裡面暗，跨過輪廓線再往內會變亮 → 走不進去
+  // 但淺灰商品直接坐在一樣深的影子上、又沒有輪廓線時分不出來，所以預設「保留原樣」不做
+  if(shadow==='soft'||shadow==='remove'){
+    const st=new Int32Array(n),PM=new Uint8Array(n);let sp=0;// PM = 這條路上最暗到多少
+    const Lbg=p=>(MR[p]*77+MG[p]*150+MB[p]*29)/256;
+    const gSh=Math.max(4,gTol*1.5);
+    const isShadow=(p,q)=>{
+      if(m[q]||G[q]>gSh)return false;// 影子是慢慢變暗；商品邊緣是一下子變暗（輪廓強度大）
+      const k=q*4;if(d[k+3]<16)return false;
+      const dr=MR[q]-d[k],dg=MG[q]-d[k+1],db=MB[q]-d[k+2],lo=Math.min(dr,dg,db),hi=Math.max(dr,dg,db);
+      if(lo<-6||hi-lo>16)return false;// 比背景亮、或帶顏色 → 不是影子
+      const lb=Lbg(q);if(L[q]<lb*.45)return false;// 影子不會深到接近黑
+      return B[q]<=PM[p]+2;// 一路上只能變暗或持平：跨過較暗的輪廓線後不能再變亮
+    };
+    for(let p=0;p<n;p++)if(m[p]===1){const px=p%w;
+      if((px>0&&!m[p-1])||(px<w-1&&!m[p+1])||(p>=w&&!m[p-w])||(p<n-w&&!m[p+w])){PM[p]=B[p];st[sp++]=p}}
+    while(sp){
+      const p=st[--sp],px=p%w;let q;
+      if(px>0&&isShadow(p,q=p-1)){m[q]=2;PM[q]=Math.min(PM[p],B[q]);st[sp++]=q}
+      if(px<w-1&&isShadow(p,q=p+1)){m[q]=2;PM[q]=Math.min(PM[p],B[q]);st[sp++]=q}
+      if(p>=w&&isShadow(p,q=p-w)){m[q]=2;PM[q]=Math.min(PM[p],B[q]);st[sp++]=q}
+      if(p<n-w&&isShadow(p,q=p+w)){m[q]=2;PM[q]=Math.min(PM[p],B[q]);st[sp++]=q}
+    }
+    // 影子裡被雜訊擋住的零星小點：四周有 3 邊以上是影子、本身也沒有顏色 → 一起算影子
+    for(let pass=0;pass<2;pass++)for(let p=w;p<n-w;p++){
+      if(m[p])continue;const px=p%w;if(px===0||px===w-1)continue;
+      const c2=(m[p-1]===2)+(m[p+1]===2)+(m[p-w]===2)+(m[p+w]===2);if(c2<3)continue;
+      const k=p*4,dr=MR[p]-d[k],dg=MG[p]-d[k+1],db=MB[p]-d[k+2],lo=Math.min(dr,dg,db),hi=Math.max(dr,dg,db);
+      if(lo>=-12&&hi-lo<=20)m[p]=2;
+    }
+  }
+  if(soft){
+    // 貼著背景的三圈邊緣：依色差給半透明，並扣掉混進來的背景色（去白邊）
+    const ring=new Uint8Array(n);
+    for(const pass of[1,2,3]){
+      const hit=pass===1?(q=>m[q]>0):(q=>ring[q]===pass-1);
+      for(let p=0;p<n;p++){
+        if(m[p]||ring[p])continue;
+        const px=p%w;
+        if((px>0&&hit(p-1))||(px<w-1&&hit(p+1))||(p>=w&&hit(p-w))||(p<n-w&&hit(p+w)))ring[p]=pass;
+      }
+    }
+    // 透明度 = 這個像素的顏色落在「背景色 → 旁邊商品色」之間的位置
+    for(let p=0;p<n;p++){
+      if(!ring[p])continue;
+      const k=p*4,px=p%w,py=(p-px)/w;
+      let fr=0,fg=0,fb=0,fn=0;
+      for(let yy=Math.max(0,py-4);yy<=Math.min(h-1,py+4);yy++)for(let xx=Math.max(0,px-4);xx<=Math.min(w-1,px+4);xx++){
+        const q=yy*w+xx;if(m[q]||ring[q])continue;
+        const j=q*4;fr+=d[j];fg+=d[j+1];fb+=d[j+2];fn++;
+      }
+      const br=MR[p],bgc=MG[p],bb=MB[p];// 這個位置的背景色
+      let a;
+      if(fn){
+        fr/=fn;fg/=fn;fb/=fn;
+        const vr=fr-br,vg=fg-bgc,vb=fb-bb,L2=vr*vr+vg*vg+vb*vb;
+        if(L2<T2)continue;// 商品顏色跟背景太像，邊緣保持不透明，免得吃掉商品
+        a=((d[k]-br)*vr+(d[k+1]-bgc)*vg+(d[k+2]-bb)*vb)/L2;
+      }else a=(Math.sqrt(mdist2(p))-tol)/(tol*3);
+      a=Math.min(1,Math.max(0,a));
+      if(a>=.98)continue;
+      if(a<.04){d[k+3]=0;continue}
+      d[k]=Math.max(0,Math.min(255,(d[k]-(1-a)*br)/a));
+      d[k+1]=Math.max(0,Math.min(255,(d[k+1]-(1-a)*bgc)/a));
+      d[k+2]=Math.max(0,Math.min(255,(d[k+2]-(1-a)*bb)/a));
+      d[k+3]=Math.round(d[k+3]*a);
+    }
+  }
+  for(let p=0;p<n;p++){
+    if(m[p]===1)d[p*4+3]=0;
+    else if(m[p]===2){
+      // 影子改成半透明黑：疊回白底跟原圖一樣深，放到其他顏色上也像自然的影子
+      const k=p*4,lb=(MR[p]*77+MG[p]*150+MB[p]*29)/256;
+      const a=shadow==='remove'?0:Math.max(0,Math.min(1,(lb-L[p])/lb));
+      d[k]=d[k+1]=d[k+2]=0;d[k+3]=Math.round(a*255);
+    }
+  }
+  x.putImageData(img,0,0);
+  return c;
+}
+// 處理前的來源圖：先裁切／旋轉，再去背
+function prepSource(bmp,edit){
+  let s=applyEdit(bmp,edit);
+  if(S.cutOn)s=cutBackground(s,S.cutTol,S.cutSoft,S.cutHoles,S.cutShadow);
+  return s;
+}
+/* ---------- 加工：框 / Logo / 文字標籤 ---------- */
+const ASSET={frame:null,logo:null},ASSET_BLOB={frame:null,logo:null};
+function overlaysOn(){return(S.frameOn&&ASSET.frame)||(S.logoOn&&ASSET.logo)||(S.labelOn&&S.labelText.trim())}
+// pos：第一碼 t/m/b（上中下）、第二碼 l/c/r（左中右）
+function posXY(pos,W,H,w,h,m){
+  const x=pos[1]==='l'?m:pos[1]==='r'?W-w-m:(W-w)/2;
+  const y=pos[0]==='t'?m:pos[0]==='b'?H-h-m:(H-h)/2;
+  return[Math.round(x),Math.round(y)];
+}
+function applyOverlays(ctx,W,H){
+  const mn=Math.min(W,H);
+  if(S.frameOn&&ASSET.frame){const F=ASSET.frame;drawHQ(ctx,F,0,0,F.width,F.height,0,0,W,H)}
+  if(S.logoOn&&ASSET.logo){
+    const L=ASSET.logo,w=Math.round(W*S.logoSize/100),h=Math.round(w*L.height/L.width);
+    const[x,y]=posXY(S.logoPos,W,H,w,h,Math.round(mn*S.logoMargin/100));
+    ctx.save();ctx.globalAlpha=S.logoOp/100;drawHQ(ctx,L,0,0,L.width,L.height,x,y,w,h);ctx.restore();
+  }
+  const lines=S.labelText.split('\n').map(s=>s.trim()).filter(Boolean);
+  if(S.labelOn&&lines.length){
+    const fs=Math.max(8,Math.round(mn*S.labelSize/100)),lh=fs*1.2;
+    ctx.save();
+    ctx.font=`bold ${fs}px "Microsoft JhengHei","PingFang TC","Noto Sans TC",sans-serif`;
+    const tw=Math.max(...lines.map(l=>ctx.measureText(l).width)),th=lh*lines.length;
+    let w,h;
+    if(S.labelShape==='circle'){w=h=Math.ceil(Math.hypot(tw,th)+fs*.4)}
+    else{w=Math.ceil(tw+fs*1.2);h=Math.ceil(th+fs*.6)}
+    const[x,y]=posXY(S.labelPos,W,H,w,h,Math.round(mn*S.labelMargin/100));
+    ctx.fillStyle=S.labelBg;ctx.beginPath();
+    if(S.labelShape==='circle')ctx.arc(x+w/2,y+h/2,w/2,0,Math.PI*2);
+    else ctx.roundRect(x,y,w,h,S.labelShape==='pill'?Math.min(h/2,fs*.9):fs*.12);
+    ctx.fill();
+    ctx.fillStyle=S.labelColor;ctx.textAlign='center';ctx.textBaseline='middle';
+    lines.forEach((l,i)=>ctx.fillText(l,x+w/2,y+h/2-th/2+lh*(i+.5)+fs*.04));
+    ctx.restore();
+  }
+}
+// 圖片放進 W×H 範圍的位置（adj = 手動調整：z 縮放倍率、dx/dy 位移佔範圍的比例；pad 為四周留白 %）
+function place(box,W,H,adj,fit,pad){
+  const p=(pad||0)/100;
+  const sc0=fit==='cover'?Math.max(W/box.w,H/box.h):Math.min(W*(1-2*p)/box.w,H*(1-2*p)/box.h);
+  const a=adj||{z:1,dx:0,dy:0},sc=sc0*a.z,dw=Math.round(box.w*sc),dh=Math.round(box.h*sc);
+  return{x:Math.round(W/2+a.dx*W-dw/2),y:Math.round(H/2+a.dy*H-dh/2),w:dw,h:dh};
+}
+function placement(box,W,H,adj){return place(box,W,H,adj,S.fit,S.fit==='contain'?S.pad:0)}
+// 把 box 範圍的圖畫到 dst，只取落在 clip 內看得到的部分，避免縮圖時處理一堆裁掉的像素
+function drawPlaced(ctx,img,box,dst,clip){
+  const kx=box.w/dst.w,ky=box.h/dst.h;
+  const x0=Math.max(clip.x,dst.x),y0=Math.max(clip.y,dst.y),x1=Math.min(clip.x+clip.w,dst.x+dst.w),y1=Math.min(clip.y+clip.h,dst.y+dst.h);
+  if(x1<=x0||y1<=y0)return;
+  drawHQ(ctx,img,box.x+(x0-dst.x)*kx,box.y+(y0-dst.y)*ky,(x1-x0)*kx,(y1-y0)*ky,x0,y0,x1-x0,y1-y0);
+}
+
+function outMime(origType){
+  if(S.fmt==='keep')return EXT[origType]?origType:'image/jpeg';
+  return 'image/'+S.fmt;
+}
+function needFill(mime){return mime==='image/jpeg'||!S.alpha}
+
+// 依「壓縮方式」編碼；fixed=true 表示尺寸不可再縮
+async function encode(canvas,mime,fixed){
+  if(S.mode==='quality'){
+    const b=await toBlob(canvas,mime,mime==='image/png'?undefined:S.q/100);
+    return{blob:b,cv:canvas,q:mime==='image/png'?null:S.q};
+  }
+  const limit=S.kb*1024;let cv=canvas,shrunk=false;
+  for(let round=0;round<12;round++){
+    if(mime==='image/png'){
+      const b=await toBlob(cv,mime);
+      if(b.size<=limit)return{blob:b,cv,shrunk};
+      if(fixed)return{blob:b,cv,over:true,pngOver:true};
+    }else{
+      const top=await toBlob(cv,mime,.92);
+      if(top.size<=limit)return{blob:top,cv,q:92,shrunk};
+      let lo=fixed?.08:.5,hi=.92;
+      const low=await toBlob(cv,mime,lo);
+      if(low.size<=limit){
+        let best={b:low,q:lo};
+        for(let i=0;i<7;i++){
+          const m=(lo+hi)/2,bm=await toBlob(cv,mime,m);
+          if(bm.size<=limit){best={b:bm,q:m};lo=m}else hi=m;
+        }
+        return{blob:best.b,cv,q:Math.round(best.q*100),shrunk};
+      }
+      if(fixed)return{blob:low,cv,over:true,q:Math.round(lo*100)};
+    }
+    // 畫質已到底限還是太大：再縮小一點
+    const c2=mk(cv.width*.85,cv.height*.85);
+    drawHQ(c2.getContext('2d'),cv,0,0,cv.width,cv.height,0,0,c2.width,c2.height);
+    cv=c2;shrunk=true;
+  }
+  const b=await toBlob(cv,mime,mime==='image/png'?undefined:.5);
+  return{blob:b,cv,over:b.size>limit,shrunk};
+}
+
+async function processFile(file,orig,adj,edit){
+  const bmp=prepSource(orig,edit);
+  let box={x:0,y:0,w:bmp.width,h:bmp.height};
+  const fixedMode=S.sizeMode==='fixed';
+  if(fixedMode&&S.fit==='contain'&&S.trim)box=trimBox(bmp);
+  let W,H,dst;
+  if(fixedMode){
+    W=S.fw;H=S.fh;dst=placement(box,W,H,adj);
+  }else if(S.sizeMode==='max'){
+    const sc=Math.min(1,S.maxEdge/Math.max(box.w,box.h));
+    W=Math.round(box.w*sc);H=Math.round(box.h*sc);dst={x:0,y:0,w:W,h:H};
+  }else{W=box.w;H=box.h;dst={x:0,y:0,w:W,h:H}}
+
+  const mime=outMime(file.type);
+  const c=mk(W,H),ctx=c.getContext('2d');
+  if(needFill(mime)){ctx.fillStyle=S.bg;ctx.fillRect(0,0,W,H)}
+  drawPlaced(ctx,bmp,box,dst,{x:0,y:0,w:W,h:H});
+  applyOverlays(ctx,W,H);
+  // 固定尺寸、尺寸不變：都不可以為了壓大小偷偷縮圖，只能降畫質
+  const r=await encode(c,mime,fixedMode||S.sizeMode==='none');
+  r.mime=mime;r.w=r.cv.width;r.h=r.cv.height;r.sw=box.w;r.sh=box.h;
+  // 不改尺寸、同格式，壓完反而變大 → 保留原檔
+  const untouched=!edit&&!S.cutOn&&(S.sizeMode==='none'||(S.sizeMode==='max'&&W===bmp.width&&H===bmp.height));
+  if(untouched&&!overlaysOn()&&mime===file.type&&r.blob.size>=file.size&&(S.mode==='quality'||file.size<=S.kb*1024)){
+    r.blob=file;r.kept=true;r.over=false;
+  }
+  delete r.cv;
+  return r;
+}
+
+/* ---------- 批次清單（卡片）---------- */
+let items=[],uid=0,runToken=0;
+const listEl=$('#list');
+
+async function loadBitmap(file){return await createImageBitmap(file)}
+
+function addFiles(files){
+  const imgs=[...files].filter(f=>f.type.startsWith('image/')||/\.(jpe?g|png|webp|gif|bmp|heic|heif|avif)$/i.test(f.name));
+  if(!imgs.length){toast('沒有可處理的圖片檔');return}
+  for(const f of imgs){
+    const it={id:++uid,file:f,origUrl:URL.createObjectURL(f),status:'wait'};
+    items.push(it);listEl.appendChild(itemEl(it));
+  }
+  toast(`已加入 ${imgs.length} 張`);
+  runAll(imgs.length);
+}
+// 流水號只算讀得到的圖，壞檔不佔號
+function outName(it){
+  const base=it.file.name.replace(/\.[^.]+$/,'')||'image';
+  const ext=it.res?.kept?(it.file.name.match(/\.[^.]+$/)?.[0]||''):(EXT[it.res?.mime]||'.jpg');
+  if(S.naming==='suffix')return base+S.suffix+ext;
+  if(S.naming==='seq'){
+    const ok=items.filter(i=>i.status!=='err'),n=S.seqStart+Math.max(0,ok.indexOf(it)),len=String(S.seqStart+ok.length-1).length;
+    return S.prefix+String(n).padStart(Math.max(2,len),'0')+ext;
+  }
+  return base+ext;
+}
+function itemEl(it){
+  const el=document.createElement('div');el.className='card wait';el.id='it'+it.id;el.draggable=true;
+  el.innerHTML=`<div class="pv" title="點一下比較處理前後"><img alt="" draggable="false"><div class="st"></div><span class="hov">點圖比較前後</span></div>
+<div class="cb"><div class="cn"></div><div class="cm"></div><div class="badges"></div></div>
+<div class="cf"><button class="ib" data-a="adj" aria-label="調整位置與大小">${IC.move}</button><button class="ib" data-a="crop" aria-label="裁切／旋轉">${IC.crop}</button><button class="ib" data-a="cmp" title="前後比較" aria-label="前後比較">${IC.cmp}</button><button class="ib danger" data-a="rm" title="移除" aria-label="移除">${IC.trash}</button><button class="btn sm" data-a="dl" title="下載這張">${IC.dl}<span class="t">下載</span></button></div>`;
+  const img=el.querySelector('.pv img');
+  img.onerror=()=>{img.hidden=true};img.onload=()=>{img.hidden=false};
+  img.src=it.origUrl;
+  el.querySelector('.pv').onclick=()=>openCmp(it);
+  el.querySelector('[data-a=cmp]').onclick=()=>openCmp(it);
+  el.querySelector('[data-a=adj]').onclick=()=>openEditor(it);
+  el.querySelector('[data-a=crop]').onclick=()=>openCrop(it);
+  el.querySelector('[data-a=dl]').onclick=()=>{if(it.res)download(it.res.blob,outName(it))};
+  el.querySelector('[data-a=rm]').onclick=()=>{
+    URL.revokeObjectURL(it.origUrl);if(it.res?.url&&!it.res.kept)URL.revokeObjectURL(it.res.url);
+    items=items.filter(x=>x!==it);el.remove();renderAll();
+  };
+  // 拖曳卡片調整順序（流水號依此順序）
+  el.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/card',String(it.id));e.dataTransfer.effectAllowed='move';el.classList.add('dragging')});
+  el.addEventListener('dragend',()=>{el.classList.remove('dragging');$$('.card.dropto').forEach(c=>c.classList.remove('dropto'))});
+  el.addEventListener('dragover',e=>{if(!e.dataTransfer.types.includes('text/card'))return;e.preventDefault();el.classList.add('dropto')});
+  el.addEventListener('dragleave',()=>el.classList.remove('dropto'));
+  el.addEventListener('drop',e=>{
+    const from=e.dataTransfer.getData('text/card');if(!from)return;
+    e.preventDefault();e.stopPropagation();el.classList.remove('dropto');
+    const a=items.find(x=>x.id===+from);if(!a||a===it)return;
+    const r=el.getBoundingClientRect(),after=e.clientX>r.left+r.width/2;
+    items.splice(items.indexOf(a),1);items.splice(items.indexOf(it)+(after?1:0),0,a);
+    items.forEach(x=>{const n=$('#it'+x.id);if(n)listEl.appendChild(n)});
+    renderAll();
+  });
+  paintItem(it,el);
+  return el;
+}
+function paintItem(it,el=$('#it'+it.id)){
+  if(!el)return;
+  el.classList.remove('wait','run','done','err');el.classList.add(it.status);
+  const nm=el.querySelector('.cn'),meta=el.querySelector('.cm'),bd=el.querySelector('.badges'),st=el.querySelector('.st'),img=el.querySelector('.pv img');
+  el.querySelector('[data-a=cmp]').disabled=!it.res;
+  el.querySelector('[data-a=dl]').disabled=!it.res||it.status!=='done';// 重算中不能下載舊結果
+  const adjBtn=el.querySelector('[data-a=adj]');
+  adjBtn.hidden=S.sizeMode!=='fixed';adjBtn.disabled=it.status==='err';
+  adjBtn.classList.toggle('on',!!it.adj);
+  adjBtn.title=it.adj?'調整位置與大小（已手動調整）':'調整位置與大小';
+  const crBtn=el.querySelector('[data-a=crop]');
+  crBtn.disabled=it.status==='err';crBtn.classList.toggle('on',!!it.edit);
+  crBtn.title=it.edit?'裁切／旋轉（已編輯）':'裁切／旋轉';
+  if(it.status==='err'){
+    st.innerHTML=IC.alert+'<span>無法讀取</span>';
+    nm.innerHTML=wbr(it.file.name);meta.innerHTML='';
+    bd.innerHTML=`<p class="errmsg">${it.err}</p>`;return;
+  }
+  st.innerHTML=`<span class="spin"></span><span>${it.status==='run'?'處理中…':'等待中'}</span>`;
+  if(!it.res){
+    nm.innerHTML=wbr(it.file.name);
+    meta.innerHTML=`<span>${fmtSize(it.file.size)}</span>`;bd.innerHTML='';return;
+  }
+  const r=it.res,on=outName(it);
+  nm.innerHTML=wbr(on);
+  if(img.getAttribute('src')!==r.url)img.src=r.url;
+  const pct=Math.round((1-r.blob.size/it.file.size)*100);
+  meta.innerHTML=`<span>${it.w}×${it.h} → ${r.w}×${r.h}</span><span>${fmtSize(it.file.size)} → <b>${fmtSize(r.blob.size)}</b></span>`+
+    (on!==it.file.name?`<span class="orig">原檔：${wbr(it.file.name)}</span>`:'');
+  let b='';
+  if(r.kept)b+='<span class="bd info">原檔已經夠小，保留原檔</span>';
+  else if(pct>0)b+=`<span class="bd save">省 ${pct}%</span>`;
+  else if(pct<0)b+='<span class="bd info">檔案變大</span>';
+  if(S.mode==='limit')b+=r.over?`<span class="bd warn">超過 ${S.kb}KB</span>`:`<span class="bd ok">✓ ${S.kb}KB 以下</span>`;
+  if(r.q&&!r.kept)b+=r.q<50?`<span class="bd warn">品質 ${r.q}，畫質偏低</span>`:`<span class="bd info">品質 ${r.q}</span>`;
+  if(it.adj&&S.sizeMode==='fixed')b+='<span class="bd info">已手動調整</span>';
+  if(it.edit)b+=`<span class="bd info">${editLabel(it.edit)}</span>`;
+  if(r.shrunk)b+='<span class="bd info">為符合大小已再縮小</span>';
+  if(!r.kept&&(r.sw??it.w)<r.w*.6&&(r.sh??it.h)<r.h*.6)b+='<span class="bd warn">原圖太小，放大後可能模糊</span>';
+  if(r.pngOver)b+='<span class="bd warn">PNG 壓不到，建議改 JPG</span>';
+  if(it.file.type==='image/gif')b+='<span class="bd info">GIF 動畫只保留第一格</span>';
+  bd.innerHTML=b;
+}
+
+// 同時處理 2 張（編碼在背景執行緒，兩張交錯跑比較快）
+async function runAll(onlyNew){
+  const token=++runToken;
+  const queue=onlyNew?items.slice(-onlyNew):items.slice();
+  if(!onlyNew)queue.forEach(it=>{if(it.status!=='err'){it.status='wait'}});
+  renderAll();
+  const stale=()=>token!==runToken&&!onlyNew;
+  const worker=async()=>{
+    while(queue.length){
+      if(stale())return;
+      const it=queue.shift();
+      if(!items.includes(it)||it.status==='err')continue;
+      if(!await processOne(it,stale))return;
+    }
+  };
+  await Promise.all([worker(),worker()]);
+  renderSum();
+}
+// 處理單張；stale() 回傳 true 代表設定已變、這次結果作廢；同一張被重跑時只留最後開始的那次結果
+async function processOne(it,stale=()=>false){
+  const ver=it.ver=(it.ver||0)+1;
+  it.status='run';paintItem(it);renderSum();
+  try{
+    const bmp=await loadBitmap(it.file);
+    it.w=bmp.width;it.h=bmp.height;
+    let res;try{res=await processFile(it.file,bmp,it.adj,it.edit)}finally{bmp.close()}
+    if(stale())return false;
+    if(ver!==it.ver)return true;
+    if(it.res?.url&&!it.res.kept)URL.revokeObjectURL(it.res.url);
+    res.url=res.kept?it.origUrl:URL.createObjectURL(res.blob);
+    it.res=res;it.status='done';
+  }catch(e){
+    if(ver!==it.ver)return true;
+    console.warn('無法處理',it.file.name,e);// 讀不到的檔案（HEIC、壞檔）屬預期情況
+    it.status='err';
+    it.err=/hei[cf]/i.test(it.file.name)?'無法讀取 HEIC（iPhone 格式），請先轉成 JPG':'無法讀取這張圖片';
+  }
+  paintItem(it);renderSum();
+  return true;
+}
+function renderAll(){items.forEach(it=>paintItem(it));renderSum()}
+function renderSum(){
+  const has=items.length>0;
+  $('#bar').hidden=!has;$('#stp3').hidden=!has;$('#feats').hidden=has;$('#drop').classList.toggle('compact',has);
+  if(!has){listEl.innerHTML='';return}
+  const valid=items.filter(i=>i.status!=='err'),done=valid.filter(i=>i.res);
+  const busyN=items.filter(i=>i.status==='run'||i.status==='wait').length,errN=items.length-valid.length;
+  const o=done.reduce((s,i)=>s+i.file.size,0),n=done.reduce((s,i)=>s+i.res.blob.size,0),over=done.filter(i=>i.res.over).length;
+  const pct=o?Math.round((1-n/o)*100):0;
+  $('#stCount').textContent=items.length+' 張';
+  $('#stSize').textContent=done.length?`${fmtSize(o)} → ${fmtSize(n)}`:'—';
+  $('#stSaveL').textContent=pct>=0?'共省下':'共增加';
+  $('#stSave').textContent=!done.length?'—':Math.abs(pct)+'%';
+  $('#stOverWrap').hidden=!over;$('#stOver').textContent=over+' 張';
+  $('#stErrWrap').hidden=!errN;$('#stErr').textContent=errN+' 張';
+  $('#busy').hidden=!busyN;$('#busyT').textContent=`處理中 ${valid.length-busyN}/${valid.length}`;
+  $('#prog').hidden=!busyN;$('#progBar').style.width=(valid.length?(valid.length-busyN)/valid.length*100:100)+'%';
+  $('#pdfBtn').disabled=$('#zipBtn').disabled=$('#dirBtn').disabled=!done.length||!!busyN;
+  $('#zipT').textContent=done.length===1?'下載':`打包下載（${done.length} 張）`;
+}
+let debT;
+// 設定一改，卡片馬上標成「等待中」，不要讓舊結果看起來像新設定的結果
+function rerun(){
+  clearTimeout(debT);
+  if(items.length){items.forEach(it=>{if(it.status==='done')it.status='wait'});renderAll()}
+  debT=setTimeout(()=>{if(items.length)runAll()},350);
+}
+
+/* ---------- 下載 / ZIP ---------- */
+function download(blob,name){
+  const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;
+  document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),4000);
+}
+const CRC=(()=>{const t=new Uint32Array(256);for(let n=0;n<256;n++){let c=n;for(let k=0;k<8;k++)c=c&1?0xEDB88320^(c>>>1):c>>>1;t[n]=c>>>0}return t})();
+function crc32(u){let c=0xFFFFFFFF;for(let i=0;i<u.length;i++)c=CRC[(c^u[i])&255]^(c>>>8);return(c^0xFFFFFFFF)>>>0}
+async function makeZip(entries){
+  const enc=new TextEncoder(),parts=[],cen=[];let off=0;
+  const d=new Date(),time=(d.getHours()<<11)|(d.getMinutes()<<5)|(d.getSeconds()>>1),date=((d.getFullYear()-1980)<<9)|((d.getMonth()+1)<<5)|d.getDate();
+  for(const e of entries){
+    const data=new Uint8Array(await e.blob.arrayBuffer()),nm=enc.encode(e.name),crc=crc32(data);
+    const l=new DataView(new ArrayBuffer(30));
+    l.setUint32(0,0x04034b50,true);l.setUint16(4,20,true);l.setUint16(6,0x0800,true);l.setUint16(8,0,true);
+    l.setUint16(10,time,true);l.setUint16(12,date,true);l.setUint32(14,crc,true);
+    l.setUint32(18,data.length,true);l.setUint32(22,data.length,true);l.setUint16(26,nm.length,true);l.setUint16(28,0,true);
+    parts.push(l.buffer,nm,data);
+    const c=new DataView(new ArrayBuffer(46));
+    c.setUint32(0,0x02014b50,true);c.setUint16(4,20,true);c.setUint16(6,20,true);c.setUint16(8,0x0800,true);c.setUint16(10,0,true);
+    c.setUint16(12,time,true);c.setUint16(14,date,true);c.setUint32(16,crc,true);c.setUint32(20,data.length,true);c.setUint32(24,data.length,true);
+    c.setUint16(28,nm.length,true);c.setUint32(42,off,true);
+    cen.push(c.buffer,nm);
+    off+=30+nm.length+data.length;
+  }
+  const cs=cen.reduce((s,p)=>s+p.byteLength,0),e=new DataView(new ArrayBuffer(22));
+  e.setUint32(0,0x06054b50,true);e.setUint16(8,entries.length,true);e.setUint16(10,entries.length,true);
+  e.setUint32(12,cs,true);e.setUint32(16,off,true);
+  return new Blob([...parts,...cen,e.buffer],{type:'application/zip'});
+}
+// 同名時在後面加 (2)、(3)…；taken(name) 回傳這個名字是否已被用掉
+async function uniqueName(n,taken){
+  if(!await taken(n))return n;
+  const b=n.replace(/(\.[^.]+)$/,''),x=n.slice(b.length);let k=2;
+  while(await taken(`${b} (${k})${x}`))k++;
+  return `${b} (${k})${x}`;
+}
+async function batchEntries(){
+  const used=new Set(),entries=[];
+  for(const it of items.filter(i=>i.res&&i.status!=='err')){
+    const n=await uniqueName(outName(it),async v=>used.has(v));
+    used.add(n);entries.push({name:n,blob:it.res.blob});
+  }
+  return entries;
+}
+$('#zipBtn').onclick=async()=>{
+  const done=items.filter(i=>i.res&&i.status!=='err');
+  if(!done.length)return;
+  // 只有一張就直接下載，不用打包
+  if(done.length===1){download(done[0].res.blob,outName(done[0]));return}
+  const z=await makeZip(await batchEntries());
+  const d=new Date(),p=v=>String(v).padStart(2,'0');
+  download(z,`圖片_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}.zip`);
+};
+/*PDFJS*/
+/* ---------- 圖片轉 PDF（自己寫 PDF，不用外部套件） ---------- */
+const pdfOpt={size:'fit',orient:'auto',margin:'20'};
+async function jpegForPdf(it){
+  const b=it.res.blob;
+  const bmp=await createImageBitmap(b);
+  const w=bmp.width,h=bmp.height;
+  if(b.type==='image/jpeg'){bmp.close();return{w,h,data:new Uint8Array(await b.arrayBuffer())}}
+  const c=document.createElement('canvas');c.width=w;c.height=h;const x=c.getContext('2d');
+  x.fillStyle='#fff';x.fillRect(0,0,w,h);x.drawImage(bmp,0,0);bmp.close();
+  const jb=await new Promise(r=>c.toBlob(r,'image/jpeg',0.92));
+  return{w,h,data:new Uint8Array(await jb.arrayBuffer())};
+}
+function buildPdf(imgs,o){
+  const enc=new TextEncoder(),parts=[];let len=0;const offs=[];
+  const put=d=>{const u=typeof d==='string'?enc.encode(d):d;parts.push(u);len+=u.length};
+  const obj=(n,body)=>{offs[n]=len;put(n+' 0 obj\n');put(body);put('\nendobj\n')};
+  const N=imgs.length;
+  put('%PDF-1.4\n');put(new Uint8Array([37,226,227,207,211,10]));
+  obj(1,'<</Type/Catalog/Pages 2 0 R>>');
+  const kids=imgs.map((_,i)=>(3+i*3)+' 0 R').join(' ');
+  obj(2,'<</Type/Pages/Kids['+kids+']/Count '+N+'>>');
+  const m=+o.margin;
+  imgs.forEach((im,i)=>{
+    const pg=3+i*3,ct=pg+1,ig=pg+2;
+    const iw=im.w*0.75,ih=im.h*0.75;let pw,ph;
+    if(o.size==='fit'){pw=iw+m*2;ph=ih+m*2}
+    else{const a=o.size==='a4'?[595.28,841.89]:[612,792];const land=o.orient==='l'||(o.orient==='auto'&&im.w>im.h);pw=land?a[1]:a[0];ph=land?a[0]:a[1]}
+    const k=Math.min((pw-m*2)/iw,(ph-m*2)/ih);
+    const dw=iw*k,dh=ih*k,dx=(pw-dw)/2,dy=(ph-dh)/2;
+    const f=v=>v.toFixed(2);
+    obj(pg,'<</Type/Page/Parent 2 0 R/MediaBox[0 0 '+f(pw)+' '+f(ph)+']/Resources<</XObject<</Im0 '+ig+' 0 R>>>>/Contents '+ct+' 0 R>>');
+    const cs='q '+f(dw)+' 0 0 '+f(dh)+' '+f(dx)+' '+f(dy)+' cm /Im0 Do Q';
+    obj(ct,'<</Length '+cs.length+'>>\nstream\n'+cs+'\nendstream');
+    offs[ig]=len;put(ig+' 0 obj\n<</Type/XObject/Subtype/Image/Width '+im.w+'/Height '+im.h+'/ColorSpace/DeviceRGB/BitsPerComponent 8/Filter/DCTDecode/Length '+im.data.length+'>>\nstream\n');put(im.data);put('\nendstream\nendobj\n');
+  });
+  const total=3+N*3,xr=len;
+  put('xref\n0 '+total+'\n0000000000 65535 f \n');
+  for(let n=1;n<total;n++)put(String(offs[n]).padStart(10,'0')+' 00000 n \n');
+  put('trailer\n<</Size '+total+'/Root 1 0 R>>\nstartxref\n'+xr+'\n%%EOF');
+  return new Blob(parts,{type:'application/pdf'});
+}
+function syncPdfUI(){$$('.seg[data-pdf]').forEach(sg=>sg.querySelectorAll('button').forEach(b=>b.classList.toggle('on',pdfOpt[sg.dataset.pdf]===b.dataset.v)));$('.seg[data-pdf=orient]').style.opacity=pdfOpt.size==='fit'?.4:1}
+$$('.seg[data-pdf]').forEach(sg=>sg.onclick=e=>{const b=e.target.closest('button');if(!b)return;pdfOpt[sg.dataset.pdf]=b.dataset.v;syncPdfUI()});
+$('#pdfBtn').onclick=()=>{$('#pdfBox').hidden=!$('#pdfBox').hidden;syncPdfUI()};
+$('#pdfCancel').onclick=()=>{$('#pdfBox').hidden=true};
+$('#pdfGo').onclick=async()=>{
+  const done=items.filter(i=>i.res&&i.status==='done');
+  if(!done.length){toast('還沒有處理好的圖片');return}
+  const btn=$('#pdfGo');btn.disabled=true;
+  try{
+    const imgs=[];for(const it of done)imgs.push(await jpegForPdf(it));
+    const blob=buildPdf(imgs,pdfOpt);
+    const d=new Date(),p=v=>String(v).padStart(2,'0');
+    download(blob,'圖片_'+d.getFullYear()+p(d.getMonth()+1)+p(d.getDate())+'_'+p(d.getHours())+p(d.getMinutes())+'.pdf');
+    toast('已合併 '+imgs.length+' 張，PDF '+kbTxt(Math.round(blob.size/1024)));
+  }catch(e){toast('轉 PDF 失敗：'+(e.message||e))}finally{btn.disabled=false}
+};
+// 直接存進資料夾（Chrome／Edge 才有）；資料夾裡已經有同名檔案就另存 (2)，不覆蓋
+async function saveToDir(dir,entries){
+  const exists=async n=>{try{await dir.getFileHandle(n);return true}catch(e){return false}};
+  let ok=0;
+  for(const e of entries){
+    const name=await uniqueName(e.name,exists);
+    const fh=await dir.getFileHandle(name,{create:true}),w=await fh.createWritable();
+    await w.write(e.blob);await w.close();ok++;
+  }
+  return ok;
+}
+$('#dirBtn').hidden=!('showDirectoryPicker' in window);
+$('#dirBtn').onclick=async()=>{
+  let dir;
+  try{dir=await window.showDirectoryPicker({id:'imgtool-out',mode:'readwrite'})}
+  catch(e){if(e.name!=='AbortError')toast('無法開啟資料夾');return}
+  try{const n=await saveToDir(dir,await batchEntries());toast(`已存 ${n} 張到「${dir.name}」`)}
+  catch(e){console.warn(e);toast('存檔失敗，請改用打包下載')}
+};
+$('#clearBtn').onclick=()=>{
+  items.forEach(it=>{URL.revokeObjectURL(it.origUrl);if(it.res?.url&&!it.res.kept)URL.revokeObjectURL(it.res.url)});
+  items=[];runToken++;listEl.innerHTML='';renderSum();
+};
+
+/* ---------- 拖放 / 選檔 / 貼上 ---------- */
+const drop=$('#drop'),fileIn=$('#file');
+drop.onclick=()=>fileIn.click();
+drop.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fileIn.click()}});
+fileIn.onchange=()=>{addFiles(fileIn.files);fileIn.value=''};
+async function filesFromDT(dt){
+  const out=[],its=[...(dt.items||[])].map(i=>i.webkitGetAsEntry&&i.webkitGetAsEntry()).filter(Boolean);
+  if(!its.length)return[...dt.files];
+  async function walk(en){
+    if(en.isFile)out.push(await new Promise(r=>en.file(r,()=>r(null))));
+    else if(en.isDirectory){
+      const rd=en.createReader();let batch;
+      do{batch=await new Promise(r=>rd.readEntries(r,()=>r([])));for(const e of batch)await walk(e)}while(batch.length);
+    }
+  }
+  for(const e of its)await walk(e);
+  return out.filter(Boolean);
+}
+const isFileDrag=e=>[...(e.dataTransfer?.types||[])].includes('Files');
+['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{if(!isFileDrag(e))return;e.preventDefault();drop.classList.add('over')}));
+['dragleave','drop'].forEach(t=>drop.addEventListener(t,()=>drop.classList.remove('over')));
+drop.addEventListener('drop',async e=>{if(!isFileDrag(e))return;e.preventDefault();addFiles(await filesFromDT(e.dataTransfer))});
+// 防止拖錯地方時瀏覽器直接打開圖片
+window.addEventListener('dragover',e=>e.preventDefault());
+window.addEventListener('drop',async e=>{
+  e.preventDefault();
+  if(e.target.closest('.drop,.cell'))return;
+  if(!e.dataTransfer?.files?.length)return;
+  const fs=await filesFromDT(e.dataTransfer);
+  S.tab==='collage'?collageAdd(fs):addFiles(fs);
+});
+document.addEventListener('paste',e=>{
+  if(e.target.matches('input[type=text],input[type=number],textarea'))return;
+  const fs=[...(e.clipboardData?.files||[])].filter(f=>f.type.startsWith('image/'));
+  if(!fs.length)return;
+  const named=fs.map((f,i)=>new File([f],`貼上的圖片_${Date.now()}_${i+1}.${(f.type.split('/')[1]||'png').replace('jpeg','jpg')}`,{type:f.type}));
+  S.tab==='collage'?collageAdd(named):addFiles(named);
+});
+
+/* ---------- 比較視窗 ---------- */
+const modal=$('#modal'),cmp=$('#cmp');let cmpPos=50,cmpIt=null;
+function openCmp(it){
+  if(!it.res)return;cmpIt=it;
+  $('#mName').textContent=outName(it);
+  $('#mBefore').src=it.origUrl;$('#mAfter').src=it.res.url;
+  $('#mFt').innerHTML=`<span>原圖 ${it.w}×${it.h}・${fmtSize(it.file.size)}</span><span>處理後 ${it.res.w}×${it.res.h}・${fmtSize(it.res.blob.size)}</span><span>在圖上左右拖動可以比較</span>`;
+  setZoom('fit');cmpPos=50;paintCmp();modal.classList.add('on');
+}
+function setZoom(v){
+  $$('#mZoom button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  cmp.style.width=v==='full'&&cmpIt?cmpIt.res.w+'px':'';
+  cmp.style.maxWidth=v==='full'?'none':`min(100%, ${cmpIt?.res.w||1000}px, calc((100vh - 180px) * ${cmpIt?cmpIt.res.w/cmpIt.res.h:1}))`;
+}
+// 原圖要對齊處理後的畫面：用 object-fit 讓兩張重疊在同一框內
+function paintCmp(){
+  $('#mTop').style.clipPath=`inset(0 ${100-cmpPos}% 0 0)`;
+  $('#mLn').style.left=cmpPos+'%';
+}
+function cmpMove(e){const r=cmp.getBoundingClientRect();cmpPos=Math.max(0,Math.min(100,(e.clientX-r.left)/r.width*100));paintCmp()}
+cmp.addEventListener('pointerdown',e=>{cmp.setPointerCapture(e.pointerId);cmpMove(e)});
+cmp.addEventListener('pointermove',e=>{if(e.buttons)cmpMove(e)});
+$('#mZoom').onclick=e=>{const b=e.target.closest('button');if(b)setZoom(b.dataset.v)};
+$('#mClose').onclick=()=>modal.classList.remove('on');
+modal.onclick=e=>{if(e.target===modal)modal.classList.remove('on')};
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){modal.classList.remove('on');if(ED)edClose();if(CR)crClose()}});
+
+/* ---------- 拼圖 ---------- */
+const LAYOUTS={
+  '2h':[[0,0,.5,1],[.5,0,.5,1]],
+  '2v':[[0,0,1,.5],[0,.5,1,.5]],
+  '3h':[[0,0,1/3,1],[1/3,0,1/3,1],[2/3,0,1/3,1]],
+  '3v':[[0,0,1,1/3],[0,1/3,1,1/3],[0,2/3,1,1/3]],
+  '1l2r':[[0,0,.5,1],[.5,0,.5,.5],[.5,.5,.5,.5]],
+  '1t2b':[[0,0,1,.5],[0,.5,.5,.5],[.5,.5,.5,.5]],
+  '1l3r':[[0,0,2/3,1],[2/3,0,1/3,1/3],[2/3,1/3,1/3,1/3],[2/3,2/3,1/3,1/3]],
+  '1t3b':[[0,0,1,2/3],[0,2/3,1/3,1/3],[1/3,2/3,1/3,1/3],[2/3,2/3,1/3,1/3]],
+  '4':[[0,0,.5,.5],[.5,0,.5,.5],[0,.5,.5,.5],[.5,.5,.5,.5]],
+  '6':[[0,0,1/3,.5],[1/3,0,1/3,.5],[2/3,0,1/3,.5],[0,.5,1/3,.5],[1/3,.5,1/3,.5],[2/3,.5,1/3,.5]],
+  '9':[0,1,2].flatMap(r=>[0,1,2].map(c=>[c/3,r/3,1/3,1/3])),
+  '1c4':[[0,.25,1,.5],[0,0,.5,.25],[.5,0,.5,.25],[0,.75,.5,.25],[.5,.75,.5,.25]],
+};
+const LAY_ORDER=['2h','2v','3h','3v','4','1l2r','1t2b','1l3r','1t3b','6','9','1c4'];
+let cImgs=[];// 每格一張：{bmp,name} 或 null
+let cAdj=[];// 每格的手動調整 {z,dx,dy} 或 null（跟著圖片一起換位）
+const cv=$('#cv'),cellsEl=$('#cells');
+
+function cellRects(){
+  const L=LAYOUTS[S.layout],W=S.cw,H=S.ch,m=S.margin,g=S.gap,iw=W-2*m,ih=H-2*m,e=1e-6;
+  return L.map(([fx,fy,fw,fh])=>{
+    const l=fx>e?g/2:0,r=fx+fw<1-e?g/2:0,t=fy>e?g/2:0,b=fy+fh<1-e?g/2:0;
+    return{x:Math.round(m+fx*iw+l),y:Math.round(m+fy*ih+t),w:Math.round(fw*iw-l-r),h:Math.round(fh*ih-t-b)};
+  });
+}
+function drawCollage(canvas){
+  canvas.width=S.cw;canvas.height=S.ch;
+  const ctx=canvas.getContext('2d');
+  ctx.fillStyle=S.cbg;ctx.fillRect(0,0,S.cw,S.ch);
+  cellRects().forEach((r,i)=>{
+    const im=cImgs[i];if(!im||r.w<=0||r.h<=0)return;
+    const b=cellSrc(im),box={x:0,y:0,w:b.width,h:b.height},d=place(box,r.w,r.h,cAdj[i],S.cfit,0);
+    drawPlaced(ctx,b,box,{x:r.x+d.x,y:r.y+d.y,w:d.w,h:d.h},r);
+  });
+  applyOverlays(ctx,S.cw,S.ch);
+}
+// 拼圖格子用的圖：開了去背就用去背後的版本（算一次存起來，設定改了才重算）
+function cellSrc(im){
+  if(!S.cutOn)return im.bmp;
+  const key=[S.cutTol,S.cutSoft,S.cutHoles,S.cutShadow].join('|');
+  if(im.cut?.key!==key)im.cut={key,cv:cutBackground(im.bmp,S.cutTol,S.cutSoft,S.cutHoles,S.cutShadow)};
+  return im.cut.cv;
+}
+function renderCollage(){
+  drawCollage(cv);
+  const rs=cellRects();cellsEl.innerHTML='';
+  rs.forEach((r,i)=>{
+    const d=document.createElement('div'),im=cImgs[i];
+    d.className='cell '+(im?'filled':'empty');
+    Object.assign(d.style,{left:r.x/S.cw*100+'%',top:r.y/S.ch*100+'%',width:r.w/S.cw*100+'%',height:r.h/S.ch*100+'%'});
+    if(im){
+      d.draggable=true;d.title=im.name;
+      d.innerHTML=`<div class="cx"><button title="調整位置與縮放" aria-label="調整位置與縮放" data-a="adj" class="${cAdj[i]?'on':''}">${IC.move}</button><button title="換一張" aria-label="換一張" data-a="re">${IC.refresh}</button><button title="移除" aria-label="移除" data-a="rm">${IC.x}</button></div>`+(cAdj[i]?'<span class="cadj">已調整</span>':'');
+      d.querySelector('[data-a=adj]').onclick=ev=>{ev.stopPropagation();openCellEditor(i)};
+      d.querySelector('[data-a=rm]').onclick=ev=>{ev.stopPropagation();cImgs[i]=null;cAdj[i]=null;renderCollage()};
+      d.querySelector('[data-a=re]').onclick=ev=>{ev.stopPropagation();pickInto(i)};
+      d.addEventListener('dblclick',()=>openCellEditor(i));
+      d.addEventListener('dragstart',ev=>{ev.dataTransfer.setData('text/cell',String(i));ev.dataTransfer.effectAllowed='move'});
+    }else{
+      d.innerHTML=`<span class="ce">${IC.plus}放入圖片</span>`;
+      d.onclick=()=>pickInto(i);
+    }
+    d.addEventListener('dragover',ev=>{ev.preventDefault();d.classList.add('over')});
+    d.addEventListener('dragleave',()=>d.classList.remove('over'));
+    d.addEventListener('drop',async ev=>{
+      ev.preventDefault();ev.stopPropagation();d.classList.remove('over');
+      const from=ev.dataTransfer.getData('text/cell');
+      if(from!==''){const f=+from;[cImgs[f],cImgs[i]]=[cImgs[i],cImgs[f]];[cAdj[f],cAdj[i]]=[cAdj[i],cAdj[f]];renderCollage();return}
+      const fs=(await filesFromDT(ev.dataTransfer)).filter(f=>f.type.startsWith('image/'));
+      if(fs.length)collageAdd(fs,i);
+    });
+    cellsEl.appendChild(d);
+  });
+  const filled=cImgs.filter(Boolean).length,n=rs.length;
+  const extra=cImgs.slice(n).filter(Boolean).length;
+  $('#cDl').disabled=!filled;
+  $('#cres').innerHTML=extra?`<span class="bd info">有 ${extra} 張圖超出目前格數，換成格數多的版型就會出現</span>`:'';
+}
+async function collageAdd(files,startAt){
+  const n=LAYOUTS[S.layout].length;let ok=0;
+  for(const f of files){
+    let bmp;try{bmp=await loadBitmap(f)}catch(e){toast(`無法讀取 ${f.name}`);continue}
+    let slot;
+    if(startAt!=null&&ok===0)slot=startAt;
+    else{slot=-1;for(let i=0;i<Math.max(n,cImgs.length+1);i++)if(!cImgs[i]){slot=i;break}}
+    cImgs[slot]={bmp,name:f.name};cAdj[slot]=null;ok++;
+  }
+  renderCollage();
+}
+let pickSlot=null;
+function pickInto(i){pickSlot=i;$('#cfile1').click()}
+$('#cfile1').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)collageAdd([f],pickSlot)};
+$('#cAdd').onclick=()=>$('#cfile').click();
+$('#cfile').onchange=e=>{const fs=[...e.target.files];e.target.value='';collageAdd(fs)};
+$('#cSame').onclick=()=>{
+  const first=cImgs.find(Boolean);if(!first){toast('請先放入一張圖');return}
+  cImgs=LAYOUTS[S.layout].map(()=>first);cAdj=[];renderCollage();
+};
+$('#cClear').onclick=()=>{cImgs=[];cAdj=[];renderCollage()};
+$('#cDl').onclick=async()=>{
+  const c=document.createElement('canvas');drawCollage(c);
+  const mime=outMime('image/jpeg'),r=await encode(c,mime,true);
+  download(r.blob,`拼圖_${S.cw}x${S.ch}${EXT[mime]}`);
+  $('#cres').innerHTML=`<span>已下載 ${S.cw}×${S.ch}・<b>${fmtSize(r.blob.size)}</b></span>`+(r.q?`<span class="bd info">品質 ${r.q}</span>`:'')+
+    (S.mode==='limit'?(r.over?`<span class="bd warn">超過 ${S.kb}KB</span>`:`<span class="bd ok">✓ ${S.kb}KB 以下</span>`):'');
+};
+function buildLayoutBtns(){
+  const box=$('#layouts');box.innerHTML='';
+  LAY_ORDER.forEach(k=>{
+    const b=document.createElement('button');b.className='lay';b.dataset.v=k;b.title=LAYOUTS[k].length+' 格';
+    b.innerHTML=`<svg viewBox="0 0 100 100">${LAYOUTS[k].map(([x,y,w,h])=>`<rect x="${x*100+3}" y="${y*100+3}" width="${w*100-6}" height="${h*100-6}" rx="4"/>`).join('')}</svg>`;
+    b.onclick=()=>{S.layout=k;save();syncUI();renderCollage()};
+    box.appendChild(b);
+  });
+}
+
+/* ---------- 手動調整位置（批次單張、拼圖單格共用）---------- */
+let ED=null;
+const edCv=$('#edCv');
+async function openEditor(it){
+  if(S.sizeMode!=='fixed'){toast('「固定尺寸」模式才能調整位置');return}
+  let bmp;try{bmp=await loadBitmap(it.file)}catch(e){toast('無法讀取這張圖片');return}
+  const full=prepSource(bmp,it.edit);if(full!==bmp)bmp.close();
+  const box=S.fit==='contain'&&S.trim?trimBox(full):{x:0,y:0,w:full.width,h:full.height};
+  edOpen({img:full,owned:true,box,W:S.fw,H:S.fh,fit:S.fit,pad:S.fit==='contain'?S.pad:0,
+    fill:needFill(outMime(it.file.type))?S.bg:null,overlays:true,adj:it.adj,title:'調整位置與大小：'+it.file.name,
+    apply:adj=>{it.adj=adj;processOne(it)}});
+}
+function openCellEditor(i){
+  const im=cImgs[i],r=cellRects()[i];if(!im||!r||r.w<=0||r.h<=0)return;
+  const src=cellSrc(im);
+  edOpen({img:src,owned:false,box:{x:0,y:0,w:src.width,h:src.height},W:r.w,H:r.h,fit:S.cfit,pad:0,
+    fill:S.cbg,overlays:false,adj:cAdj[i],title:'調整這一格：'+im.name,
+    apply:adj=>{cAdj[i]=adj;renderCollage()}});
+}
+function edOpen(cfg){
+  // 預覽用縮小版，拖曳才會順
+  const img=cfg.img,s=Math.min(1,1600/Math.max(img.width,img.height));
+  let pv=img;
+  if(s<1){pv=mk(img.width*s,img.height*s);drawHQ(pv.getContext('2d'),img,0,0,img.width,img.height,0,0,pv.width,pv.height);if(cfg.owned&&img.close)img.close()}
+  ED={...cfg,pv,s,adj:{...(cfg.adj||{z:1,dx:0,dy:0})}};
+  edCv.width=cfg.W;edCv.height=cfg.H;
+  $('#edName').textContent=cfg.title;
+  $('#ed').classList.add('on');edDraw();
+}
+function edDraw(){
+  if(!ED)return;
+  const ctx=edCv.getContext('2d'),{W,H,pv,s,box,adj}=ED;
+  ctx.clearRect(0,0,W,H);
+  if(ED.fill){ctx.fillStyle=ED.fill;ctx.fillRect(0,0,W,H)}
+  const d=place(box,W,H,adj,ED.fit,ED.pad);
+  ctx.imageSmoothingEnabled=true;ctx.imageSmoothingQuality='high';
+  ctx.drawImage(pv,box.x*s,box.y*s,box.w*s,box.h*s,d.x,d.y,d.w,d.h);
+  if(ED.overlays)applyOverlays(ctx,W,H);
+  const z=Math.round(adj.z*100);$('#edZ').value=z;$('#edZV').textContent=z+'%';
+}
+function edClose(){
+  if(ED?.owned&&ED.pv instanceof ImageBitmap)ED.pv.close();
+  $('#ed').classList.remove('on');ED=null;
+}
+let edDrag=null;
+edCv.addEventListener('pointerdown',e=>{if(!ED)return;edCv.setPointerCapture(e.pointerId);edDrag={x:e.clientX,y:e.clientY,dx:ED.adj.dx,dy:ED.adj.dy}});
+edCv.addEventListener('pointermove',e=>{
+  if(!ED||!edDrag||!e.buttons)return;
+  const r=edCv.getBoundingClientRect();
+  ED.adj.dx=edDrag.dx+(e.clientX-edDrag.x)/r.width;ED.adj.dy=edDrag.dy+(e.clientY-edDrag.y)/r.height;edDraw();
+});
+edCv.addEventListener('pointerup',()=>edDrag=null);
+edCv.addEventListener('wheel',e=>{if(!ED)return;e.preventDefault();ED.adj.z=Math.max(.2,Math.min(4,ED.adj.z*(e.deltaY<0?1.06:1/1.06)));edDraw()},{passive:false});
+$('#edZ').addEventListener('input',e=>{if(ED){ED.adj.z=e.target.value/100;edDraw()}});
+$('#edReset').onclick=()=>{if(ED){ED.adj={z:1,dx:0,dy:0};edDraw()}};
+$('#edCancel').onclick=edClose;
+$('#ed').onclick=e=>{if(e.target.id==='ed')edClose()};
+$('#edOk').onclick=()=>{
+  if(!ED)return;
+  const{apply,adj}=ED,isDefault=Math.abs(adj.z-1)<.005&&Math.abs(adj.dx)<.001&&Math.abs(adj.dy)<.001;
+  edClose();apply(isDefault?null:{...adj});
+};
+
+/* ---------- 裁切／旋轉／翻轉（批次單張）---------- */
+let CR=null,crDrag=null,crDownBg=false;
+const crCv=$('#crCv'),crBox=$('#crBox'),crWrap=$('#crWrap');
+const RATIOS={'1:1':1,'4:3':4/3,'3:4':3/4,'16:9':16/9};
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+function editLabel(e){const p=[];if(e.crop)p.push('已裁切');if(e.rot)p.push('已旋轉');if(e.fx||e.fy)p.push('已翻轉');return p.join('・')||'已編輯'}
+async function openCrop(it){
+  let bmp;try{bmp=await loadBitmap(it.file)}catch(e){toast('無法讀取這張圖片');return}
+  // 預覽用縮小版，拖曳才會順；裁切位置存比例，套到原圖一樣準
+  const s=Math.min(1,1600/Math.max(bmp.width,bmp.height)),pv=mk(bmp.width*s,bmp.height*s);
+  drawHQ(pv.getContext('2d'),bmp,0,0,bmp.width,bmp.height,0,0,pv.width,pv.height);
+  const e=it.edit||{rot:0,fx:false,fy:false,crop:null};
+  CR={it,pv,W0:bmp.width,H0:bmp.height,rot:e.rot,fx:e.fx,fy:e.fy,crop:e.crop?{...e.crop}:{x:0,y:0,w:1,h:1},ratio:'free'};
+  bmp.close();
+  $('#crName').textContent='裁切／旋轉：'+it.file.name;
+  $('#cr').classList.add('on');crRender();
+}
+function crDims(){const odd=CR.rot%2;return[odd?CR.H0:CR.W0,odd?CR.W0:CR.H0]}
+function crRender(){
+  const prev=applyEdit(CR.pv,{rot:CR.rot,fx:CR.fx,fy:CR.fy,crop:null});
+  crCv.width=prev.width;crCv.height=prev.height;crCv.getContext('2d').drawImage(prev,0,0);
+  crFit();crPaint();
+}
+function crFit(){
+  const mw=$('#crBody').clientWidth-32,mh=Math.max(160,window.innerHeight-340);
+  const k=Math.min(mw/crCv.width,mh/crCv.height,2);
+  crCv.style.width=Math.round(crCv.width*k)+'px';crCv.style.height=Math.round(crCv.height*k)+'px';
+}
+function crPaint(){
+  const c=CR.crop,[tw,th]=crDims();
+  const pos={left:c.x*100+'%',top:c.y*100+'%',width:c.w*100+'%',height:c.h*100+'%'};
+  Object.assign(crBox.style,pos);Object.assign($('#crHole').style,pos);
+  crBox.classList.toggle('lock',CR.ratio!=='free');
+  $$('#crRatio button').forEach(b=>b.classList.toggle('on',b.dataset.v===CR.ratio));
+  $('#crFx').classList.toggle('on',CR.fx);$('#crFy').classList.toggle('on',CR.fy);
+  $('#crInfo').textContent=`裁切後 ${Math.round(c.w*tw)}×${Math.round(c.h*th)} px`;
+}
+// 鎖定比例時：取圖片內最大、置中的那個比例範圍
+function crFitRatio(){
+  const r=RATIOS[CR.ratio];if(!r){return}
+  const[tw,th]=crDims();let w=tw,h=w/r;if(h>th){h=th;w=h*r}
+  CR.crop={x:(1-w/tw)/2,y:(1-h/th)/2,w:w/tw,h:h/th};
+}
+function crMin(){const[tw,th]=crDims(),m=Math.min(16,tw,th);return[m/tw,m/th]}
+// 以 (ax,ay) 為固定角，拉到 (px,py)；鎖定比例時以像素算比例
+function crFromAnchor(ax,ay,px,py){
+  const[tw,th]=crDims(),r=RATIOS[CR.ratio],dirX=px>=ax?1:-1,dirY=py>=ay?1:-1;
+  let w=Math.abs(px-ax)*tw,h=Math.abs(py-ay)*th;
+  const maxW=(dirX>0?1-ax:ax)*tw,maxH=(dirY>0?1-ay:ay)*th,mn=Math.min(16,tw,th);
+  if(r){
+    if(w/h>r)h=w/r;else w=h*r;
+    if(w<mn){w=mn;h=w/r}if(h<mn){h=mn;w=h*r}
+    if(w>maxW){w=maxW;h=w/r}if(h>maxH){h=maxH;w=h*r}
+  }else{w=clamp(w,Math.min(mn,maxW),maxW);h=clamp(h,Math.min(mn,maxH),maxH)}
+  const nw=w/tw,nh=h/th;
+  CR.crop={x:clamp(dirX>0?ax:ax-nw,0,1-nw),y:clamp(dirY>0?ay:ay-nh,0,1-nh),w:nw,h:nh};
+}
+function crPt(e){const r=crWrap.getBoundingClientRect();return{x:clamp((e.clientX-r.left)/r.width,0,1),y:clamp((e.clientY-r.top)/r.height,0,1),cx:e.clientX,cy:e.clientY}}
+crWrap.addEventListener('pointerdown',e=>{
+  if(!CR)return;e.preventDefault();crWrap.setPointerCapture(e.pointerId);
+  const p=crPt(e),h=e.target.dataset?.h;
+  crDrag=h?{mode:'h',h,c0:{...CR.crop}}:e.target===crBox?{mode:'move',p0:p,c0:{...CR.crop}}:{mode:'new',p0:p,moved:false};
+});
+crWrap.addEventListener('pointermove',e=>{
+  if(!CR||!crDrag||!e.buttons)return;
+  const p=crPt(e),d=crDrag;
+  if(d.mode==='move'){
+    const c=d.c0;CR.crop={...c,x:clamp(c.x+p.x-d.p0.x,0,1-c.w),y:clamp(c.y+p.y-d.p0.y,0,1-c.h)};
+  }else if(d.mode==='new'){
+    if(!d.moved&&Math.hypot(p.cx-d.p0.cx,p.cy-d.p0.cy)<6)return;// 只是點一下，不要變成很小的框
+    d.moved=true;crFromAnchor(d.p0.x,d.p0.y,p.x,p.y);
+  }else{
+    const c=d.c0,h=d.h,[mx,my]=crMin(),R=c.x+c.w,B=c.y+c.h;
+    if(h.length===2)crFromAnchor(h[1]==='w'?R:c.x,h[0]==='n'?B:c.y,p.x,p.y);
+    else if(h==='n'){const y=clamp(p.y,0,B-my);CR.crop={...c,y,h:B-y}}
+    else if(h==='s')CR.crop={...c,h:clamp(p.y-c.y,my,1-c.y)};
+    else if(h==='w'){const x=clamp(p.x,0,R-mx);CR.crop={...c,x,w:R-x}}
+    else if(h==='e')CR.crop={...c,w:clamp(p.x-c.x,mx,1-c.x)};
+  }
+  crPaint();
+});
+crWrap.addEventListener('pointerup',()=>crDrag=null);
+crWrap.addEventListener('pointercancel',()=>crDrag=null);
+function crRotate(dir){
+  // 翻轉是以畫面為準：只翻一個方向時，畫面右轉等於原圖左轉
+  CR.rot=(CR.rot+(CR.fx!==CR.fy?-dir:dir)+4)%4;
+  CR.crop={x:0,y:0,w:1,h:1};crFitRatio();crRender();
+}
+$('#crL').onclick=()=>CR&&crRotate(-1);
+$('#crR').onclick=()=>CR&&crRotate(1);
+$('#crFx').onclick=()=>{if(!CR)return;CR.fx=!CR.fx;CR.crop.x=1-CR.crop.x-CR.crop.w;crRender()};
+$('#crFy').onclick=()=>{if(!CR)return;CR.fy=!CR.fy;CR.crop.y=1-CR.crop.y-CR.crop.h;crRender()};
+$('#crRatio').onclick=e=>{const b=e.target.closest('button');if(!b||!CR)return;CR.ratio=b.dataset.v;crFitRatio();crPaint()};
+$('#crReset').onclick=()=>{if(!CR)return;Object.assign(CR,{rot:0,fx:false,fy:false,crop:{x:0,y:0,w:1,h:1},ratio:'free'});crRender()};
+function crValue(){
+  const c=CR.crop,full=c.x<.001&&c.y<.001&&c.w>.999&&c.h>.999;
+  if(!CR.rot&&!CR.fx&&!CR.fy&&full)return null;
+  return{rot:CR.rot,fx:CR.fx,fy:CR.fy,crop:full?null:{...c}};
+}
+function crClose(){CR=null;crDrag=null;$('#cr').classList.remove('on')}
+$('#crOk').onclick=()=>{if(!CR)return;const it=CR.it,v=crValue();crClose();it.edit=v;if(items.includes(it))processOne(it)};
+$('#crAll').onclick=()=>{
+  if(!CR)return;
+  const v=crValue(),self=CR.it,targets=items.filter(x=>x.status!=='err');
+  if(targets.some(x=>x!==self&&x.edit&&JSON.stringify(x.edit)!==JSON.stringify(v))&&!confirm('其他圖片已經有各自的裁切／旋轉，要全部改成這一張的設定嗎？'))return;
+  // 鎖定比例時，每張依自己的尺寸重算：同樣的比例、同樣的相對大小和中心點
+  const r=RATIOS[CR.ratio],[tw0,th0]=crDims();
+  const maxRect=(tw,th)=>{let w=tw,h=w/r;if(h>th){h=th;w=h*r}return[w,h]};
+  const base=v?.crop||{x:0,y:0,w:1,h:1},s=r&&v?Math.min(1,(base.w*tw0)/maxRect(tw0,th0)[0]):0;
+  crClose();
+  targets.forEach(x=>{
+    if(!v){x.edit=null;return}
+    let crop=v.crop&&{...v.crop};
+    if(s&&x!==self&&x.w&&x.h){
+      const tw=v.rot%2?x.h:x.w,th=v.rot%2?x.w:x.h,[mw,mh]=maxRect(tw,th),w=mw*s,h=mh*s;
+      const cx=(base.x+base.w/2)*tw,cy=(base.y+base.h/2)*th;
+      crop={x:clamp(cx-w/2,0,tw-w)/tw,y:clamp(cy-h/2,0,th-h)/th,w:w/tw,h:h/th};
+      if(crop.w>.999&&crop.h>.999)crop=null;
+    }
+    x.edit={...v,crop};
+  });
+  runAll();toast(v?`已套用到 ${targets.length} 張`:`已清除 ${targets.length} 張的裁切／旋轉`);
+};
+$('#crCancel').onclick=crClose;
+$('#cr').addEventListener('pointerdown',e=>{crDownBg=e.target.id==='cr'});
+$('#cr').onclick=e=>{if(e.target.id==='cr'&&crDownBg)crClose()};
+window.addEventListener('resize',()=>{if(CR)crFit()});
+
+/* ---------- 加工素材（框 / Logo）---------- */
+let assetKind=null;
+function dataURLToBlob(u){
+  const m=/^data:([^;,]+)(;base64)?,(.*)$/s.exec(u);if(!m)throw new Error('not a data URL');
+  const bin=m[2]?atob(m[3]):decodeURIComponent(m[3]),a=new Uint8Array(bin.length);
+  for(let i=0;i<bin.length;i++)a[i]=bin.charCodeAt(i);
+  return new Blob([a],{type:m[1]});
+}
+function blobToDataURL(blob){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(fr.result);fr.onerror=()=>rej(fr.error);fr.readAsDataURL(blob)})}
+const assetThumb={frame:'',logo:''};
+async function setAsset(kind,blob,persist){
+  try{
+    ASSET[kind]=await createImageBitmap(blob);ASSET_BLOB[kind]=blob;
+    if(assetThumb[kind])URL.revokeObjectURL(assetThumb[kind]);
+    $('#'+kind+'Thumb').src=assetThumb[kind]=URL.createObjectURL(blob);
+    if(persist)await persistAsset(kind,blob);
+    return true;
+  }catch(e){toast('無法讀取這張圖片');return false}
+}
+// 目前使用的框／Logo 存 IndexedDB（不佔 localStorage 的 5MB 額度）；不能用時才退回 localStorage
+async function persistAsset(kind,blob){
+  try{await IDB.set('asset.'+kind,blob);try{localStorage.removeItem('imgtool.'+kind)}catch(e){}}
+  catch(e){try{localStorage.setItem('imgtool.'+kind,await blobToDataURL(blob))}catch(e2){toast('這張圖太大，下次打開工具需要重新上傳')}}
+}
+async function restoreAssets(){
+  for(const k of['frame','logo']){
+    let blob=null,fromLS=false;
+    try{blob=await IDB.get('asset.'+k)}catch(e){}
+    if(!blob){try{const u=localStorage.getItem('imgtool.'+k);if(u){blob=dataURLToBlob(u);fromLS=true}}catch(e){}}
+    if(ASSET_BLOB[k])continue;// 還原期間使用者已經上傳新的，就不要蓋掉
+    if(blob&&await setAsset(k,blob,false)&&fromLS)await persistAsset(k,blob);// 舊版存在 localStorage 的搬進 IndexedDB
+  }
+  renderCollage();rerun();
+}
+$('#frameUp').onclick=()=>{assetKind='frame';$('#assetIn').click()};
+$('#logoUp').onclick=()=>{assetKind='logo';$('#assetIn').click()};
+// 開關打開卻在選檔視窗按取消：沒有圖就把開關關回去
+$('#assetIn').addEventListener('cancel',()=>{if(assetKind&&!ASSET[assetKind]&&S[assetKind+'On']){S[assetKind+'On']=false;save();syncUI();refreshAll()}});
+$('#assetIn').onchange=async e=>{
+  const f=e.target.files[0];e.target.value='';if(!f||!assetKind)return;
+  if(await setAsset(assetKind,f,true)){S[assetKind+'On']=true;save();syncUI();refreshAll()}
+};
+function refreshAll(){rerun();if(S.tab==='collage')renderCollage()}
+
+
+/* ---------- 我的常用設定（存在瀏覽器的 IndexedDB，連框、Logo 圖檔一起存）---------- */
+const IDB={
+  db:null,
+  open(){return this.db||(this.db=new Promise((res,rej)=>{const r=indexedDB.open('imgtool',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error)}))},
+  async get(k){const d=await this.open();return new Promise((res,rej)=>{const q=d.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>rej(q.error)})},
+  async set(k,v){const d=await this.open();return new Promise((res,rej)=>{const tx=d.transaction('kv','readwrite');tx.objectStore('kv').put(v,k);tx.oncomplete=()=>res();tx.onerror=tx.onabort=()=>rej(tx.error)})},
+};
+const PRESET_KEYS=['sizeMode','fw','fh','fit','trim','pad','maxEdge','fmt','bg','alpha','mode','kb','q','naming','suffix','prefix','seqStart',
+  'cutOn','cutTol','cutSoft','cutHoles','cutShadow','frameOn','logoOn','logoPos','logoSize','logoOp','logoMargin','labelOn','labelText','labelPos','labelShape','labelBg','labelColor','labelSize','labelMargin'];
+let myPresets=[],myUrls=[];
+const pickSettings=()=>Object.fromEntries(PRESET_KEYS.map(k=>[k,S[k]]));
+const settingsMatch=st=>PRESET_KEYS.every(k=>!(k in st)||S[k]===st[k]);
+function describeSettings(st){
+  const parts=[st.sizeMode==='fixed'?`${st.fw}×${st.fh}`:st.sizeMode==='max'?`長邊\u00a0${st.maxEdge}`:'原尺寸'];
+  if(st.cutOn)parts.push('去背');if(st.frameOn)parts.push('框');if(st.logoOn)parts.push('Logo');if(st.labelOn)parts.push('標籤');
+  parts.push(FMT_NAME[st.fmt]+(st.mode==='limit'?`\u00a0${kbTxt(st.kb)}\u00a0內`:`\u00a0品質\u00a0${st.q}`));
+  return parts.join('\u00a0· ');
+}
+async function loadPresets(){
+  try{myPresets=(await IDB.get('presets'))||[]}
+  catch(e){
+    // IndexedDB 不能用時，改讀 localStorage 的備份
+    try{
+      const raw=JSON.parse(localStorage.getItem('imgtool.presets')||'[]');
+      myPresets=raw.map(p=>({...p,frame:p.frame?dataURLToBlob(p.frame):null,logo:p.logo?dataURLToBlob(p.logo):null}));
+    }catch(e2){myPresets=[]}
+  }
+  renderPresets();syncUI();
+}
+async function savePresets(){
+  try{await IDB.set('presets',myPresets);return true}
+  catch(e){
+    try{
+      const raw=await Promise.all(myPresets.map(async p=>({...p,frame:p.frame?await blobToDataURL(p.frame):null,logo:p.logo?await blobToDataURL(p.logo):null})));
+      localStorage.setItem('imgtool.presets',JSON.stringify(raw));return true;
+    }catch(e2){toast('儲存空間不足，常用設定沒有存起來');return false}
+  }
+}
+function renderPresets(){
+  myUrls.forEach(u=>URL.revokeObjectURL(u));myUrls=[];
+  const box=$('#myList');box.innerHTML='';
+  myPresets.forEach(p=>{
+    const row=document.createElement('div');row.className='uprow';row.dataset.id=p.id;
+    const thumb=p.frame||p.logo;let pi=`<i class="ico">${IC.bookmark}</i>`;
+    if(thumb){const u=URL.createObjectURL(thumb);myUrls.push(u);pi=`<img src="${u}" alt="">`}
+    row.innerHTML=`<button class="preset" type="button"><span class="pi">${pi}</span><span class="pt"><b></b><span>${describeSettings(p.settings)}</span></span></button><button class="ib" type="button" title="刪除這組設定">${IC.trash}</button>`;
+    row.querySelector('b').textContent=p.name;
+    row.querySelector('.ib').setAttribute('aria-label','刪除「'+p.name+'」');
+    row.querySelector('.preset').onclick=()=>applyMine(p);
+    row.querySelector('.ib').onclick=()=>removeMine(p);
+    box.appendChild(row);
+  });
+  $('#myEmpty').hidden=myPresets.length>0;
+  $('#myExport').hidden=!myPresets.length;
+}
+async function applyMine(p){
+  Object.assign(S,p.settings);
+  if(p.frame&&S.frameOn)await setAsset('frame',p.frame,true);
+  if(p.logo&&S.logoOn)await setAsset('logo',p.logo,true);
+  save();syncUI();refreshAll();toast('已套用：'+p.name);
+}
+async function removeMine(p){
+  if(!confirm(`要刪除常用設定「${p.name}」嗎？`))return;
+  myPresets=myPresets.filter(x=>x!==p);
+  await savePresets();renderPresets();syncUI();toast('已刪除：'+p.name);
+}
+function closeMyForm(){$('#myForm').hidden=true;$('#myAdd').hidden=false}
+async function saveMine(){
+  const name=$('#myName').value.trim();
+  if(!name){$('#myErr').hidden=false;$('#myName').focus();return}
+  const old=myPresets.find(p=>p.name===name);
+  if(old&&!confirm(`已經有「${name}」，要用目前的設定覆蓋嗎？`))return;
+  const p={id:old?.id||Date.now().toString(36)+Math.random().toString(36).slice(2,6),name,settings:pickSettings(),
+    frame:S.frameOn&&ASSET_BLOB.frame||null,logo:S.logoOn&&ASSET_BLOB.logo||null};
+  if(old)myPresets[myPresets.indexOf(old)]=p;else myPresets.push(p);
+  if(await savePresets()){closeMyForm();renderPresets();syncUI();toast('已存成常用設定：'+name)}
+}
+$('#myAdd').onclick=()=>{
+  $('#myForm').hidden=false;$('#myAdd').hidden=true;$('#myErr').hidden=true;
+  $('#myWhat').textContent='會存：'+describeSettings(pickSettings());
+  const n=$('#myName');n.value='';n.focus();
+};
+$('#myCancel').onclick=closeMyForm;
+$('#mySave').onclick=saveMine;
+$('#myName').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();saveMine()}else if(e.key==='Escape'){e.stopPropagation();closeMyForm()}});
+$('#myName').addEventListener('input',()=>{$('#myErr').hidden=true});
+
+// 匯出／匯入：備份檔是 JSON，框和 Logo 以 dataURL 內嵌，換電腦也能還原
+const POS9=['tl','tc','tr','ml','mc','mr','bl','bc','br'];
+const ENUMS={sizeMode:['fixed','max','none'],fit:['contain','cover'],fmt:['jpeg','png','webp','keep'],mode:['limit','quality'],
+  naming:['keep','suffix','seq'],labelShape:['pill','rect','circle'],logoPos:POS9,labelPos:POS9,cutShadow:['keep','soft','remove']};
+const IMG_DATA=/^data:image\/(png|jpeg|webp);base64,/;
+// 只收認得的欄位、型別要對，避免壞掉的備份檔把工具弄亂
+function cleanSettings(st){
+  const o={};if(!st||typeof st!=='object')return o;
+  for(const k of PRESET_KEYS){
+    const v=st[k];if(v===undefined||typeof v!==typeof DEF[k])continue;
+    if(ENUMS[k]&&!ENUMS[k].includes(v))continue;
+    if(typeof v==='number'&&!Number.isFinite(v))continue;
+    if((k==='bg'||k==='labelBg'||k==='labelColor')&&!/^#[0-9a-f]{6}$/i.test(v))continue;
+    o[k]=typeof v==='string'?v.slice(0,200):v;
+  }
+  return o;
+}
+async function exportPresets(){
+  if(!myPresets.length){toast('還沒有常用設定可以匯出');return}
+  const data={app:'imgtool',version:1,exportedAt:new Date().toISOString(),
+    presets:await Promise.all(myPresets.map(async p=>({name:p.name,settings:p.settings,
+      frame:p.frame?await blobToDataURL(p.frame):null,logo:p.logo?await blobToDataURL(p.logo):null})))};
+  const d=new Date(),z=v=>String(v).padStart(2,'0');
+  download(new Blob([JSON.stringify(data)],{type:'application/json'}),`圖片工具常用設定_${d.getFullYear()}${z(d.getMonth()+1)}${z(d.getDate())}.json`);
+  toast(`已匯出 ${myPresets.length} 組常用設定`);
+}
+async function importPresets(file){
+  const bad=()=>toast('這個檔案不是常用設定的備份檔');
+  if(file.size>60*1024*1024){bad();return}
+  let data;try{data=JSON.parse(await file.text())}catch(e){bad();return}
+  if(!data||data.app!=='imgtool'||!Array.isArray(data.presets)){bad();return}
+  const incoming=[];
+  for(const p of data.presets){
+    try{
+      incoming.push({name:String(p?.name??'').trim().slice(0,30)||'匯入的設定',settings:{...Object.fromEntries(PRESET_KEYS.map(k=>[k,DEF[k]])),...cleanSettings(p?.settings)},
+        frame:typeof p?.frame==='string'&&IMG_DATA.test(p.frame)?dataURLToBlob(p.frame):null,
+        logo:typeof p?.logo==='string'&&IMG_DATA.test(p.logo)?dataURLToBlob(p.logo):null});
+    }catch(e){}
+  }
+  if(!incoming.length){toast('備份檔裡沒有可以匯入的設定');return}
+  const dup=incoming.filter(p=>myPresets.some(m=>m.name===p.name)).length;
+  const overwrite=dup>0&&confirm(`有 ${dup} 組跟現有的設定同名，要用備份檔的內容覆蓋嗎？\n按「取消」會另外新增一份（名稱後面加 (2)）。`);
+  for(const p of incoming){
+    const old=myPresets.find(m=>m.name===p.name);
+    if(old&&overwrite){myPresets[myPresets.indexOf(old)]={...p,id:old.id};continue}
+    let name=p.name,k=2;while(myPresets.some(m=>m.name===name))name=`${p.name} (${k++})`;
+    myPresets.push({...p,name,id:Date.now().toString(36)+Math.random().toString(36).slice(2,8)});
+  }
+  if(await savePresets()){renderPresets();syncUI();toast(`已匯入 ${incoming.length} 組常用設定`)}
+}
+$('#myExport').onclick=exportPresets;
+$('#myImport').onclick=()=>$('#myImportIn').click();
+$('#myImportIn').onchange=e=>{const f=e.target.files[0];e.target.value='';if(f)importPresets(f)};
+
+/* ---------- 介面綁定 ---------- */
+// 只改格式／大小的任務：一併關掉去背、框、Logo、標籤，免得轉出來被加了東西
+const PLAIN={cutOn:false,frameOn:false,logoOn:false,labelOn:false};
+const PRESETS={
+  compress:{sizeMode:'none',fmt:'jpeg',bg:'#ffffff',mode:'limit',...PLAIN},
+  png2jpg:{sizeMode:'none',fmt:'jpeg',bg:'#ffffff',mode:'quality',q:92,...PLAIN},
+  shrink:{sizeMode:'max',maxEdge:1600,fmt:'jpeg',bg:'#ffffff',mode:'limit',...PLAIN},
+  product:{sizeMode:'fixed',fw:1000,fh:1000,fit:'contain',trim:false,pad:0,fmt:'jpeg',bg:'#ffffff',mode:'limit',cutOn:false},
+  cutwhite:{sizeMode:'fixed',fw:1000,fh:1000,fit:'contain',trim:true,pad:5,fmt:'png',bg:'#ffffff',mode:'quality',q:92,cutOn:true},
+};
+const PRESET_NAMES={compress:'壓縮圖檔',png2jpg:'PNG 轉 JPG',shrink:'大圖縮小',product:'置中補白・調整比例',cutwhite:'去背成透明 PNG'};
+const presetOn=k=>Object.entries(PRESETS[k]).every(([key,v])=>S[key]===v);
+$$('.preset[data-preset]').forEach(b=>b.onclick=()=>{Object.assign(S,PRESETS[b.dataset.preset]);if(S.cutOn)S.open.cut=true;if(S.sizeMode==='fixed'&&!S.cutOn)S.open.size=true;save();syncUI();rerun();toast('已套用：'+PRESET_NAMES[b.dataset.preset])});
+
+$$('.sec').forEach(sec=>sec.querySelector('.sec-hd').addEventListener('click',()=>{const k=sec.dataset.sec;S.open[k]=!S.open[k];save();syncUI()}));
+$$('.seg[data-k]').forEach(seg=>seg.onclick=e=>{
+  const b=e.target.closest('button');if(!b)return;
+  S[seg.dataset.k]=b.dataset.v;save();syncUI();
+  if(seg.dataset.k==='cfit')renderCollage();
+  else if(seg.dataset.k==='naming')renderAll();// 只改檔名，不用重新處理圖片
+  else refreshAll();
+});
+function bindNum(id,key,{min,max,onChange}){
+  const el=$('#'+id);
+  el.addEventListener('change',()=>{let v=Math.round(+el.value);if(!isFinite(v))v=DEF[key];v=Math.max(min,Math.min(max,v));S[key]=v;save();syncUI();onChange()});
+}
+bindNum('fw','fw',{min:16,max:8000,onChange:rerun});
+bindNum('fh','fh',{min:16,max:8000,onChange:rerun});
+bindNum('maxEdge','maxEdge',{min:16,max:8000,onChange:rerun});
+bindNum('kb','kb',{min:10,max:20000,onChange:()=>{rerun()}});
+bindNum('kbQuick','kb',{min:10,max:20000,onChange:()=>{rerun()}});
+bindNum('seqStart','seqStart',{min:0,max:99999,onChange:renderAll});
+bindNum('cw','cw',{min:100,max:8000,onChange:renderCollage});
+bindNum('ch','ch',{min:100,max:8000,onChange:renderCollage});
+function bindRange(id,key,unit,onChange,live){
+  const el=$('#'+id);
+  el.addEventListener('input',()=>{S[key]=+el.value;$('#'+id+'V').textContent=el.value+unit;if(live)onChange()});
+  el.addEventListener('change',()=>{save();syncUI();onChange()});
+}
+bindRange('pad','pad','%',rerun);
+bindRange('q','q','',rerun);
+bindRange('gap','gap','px',renderCollage,true);
+bindRange('margin','margin','px',renderCollage,true);
+$('#trim').onchange=e=>{S.trim=e.target.checked;if(S.trim&&!S.pad)S.pad=5;save();syncUI();rerun()};
+$('#alpha').onchange=e=>{S.alpha=e.target.checked;save();syncUI();rerun()};
+$('#bg').onchange=e=>{S.bg=e.target.value;save();rerun()};
+$('#cbg').oninput=e=>{S.cbg=e.target.value;renderCollage()};
+$('#cbg').onchange=()=>save();
+['suffix','prefix'].forEach(k=>$('#'+k).addEventListener('input',e=>{S[k]=e.target.value;save();syncNameEx();renderAll()}));
+$('#fixedChips').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;[S.fw,S.fh]=b.dataset.wh.split(',').map(Number);save();syncUI();rerun()};
+$('#maxChips').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;S.maxEdge=+b.dataset.v;save();syncUI();rerun()};
+$('#kbChips').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;S.kb=+b.dataset.v;save();syncUI();rerun()};
+$('#cChips').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;[S.cw,S.ch]=b.dataset.wh.split(',').map(Number);save();syncUI();renderCollage()};
+$$('.tab').forEach(t=>t.onclick=()=>{S.tab=t.dataset.tab;save();syncUI();if(S.tab==='collage')renderCollage()});
+
+// 加工設定
+['frameOn','logoOn','labelOn'].forEach(k=>$('#'+k).onchange=e=>{
+  S[k]=e.target.checked;save();syncUI();
+  if(S[k]&&k!=='labelOn'&&!ASSET[k.replace('On','')]){assetKind=k.replace('On','');$('#assetIn').click()}
+  refreshAll();
+});
+$$('.pos').forEach(box=>{
+  box.innerHTML=['tl','tc','tr','ml','mc','mr','bl','bc','br'].map(v=>`<button data-v="${v}" title="${{t:'上',m:'中',b:'下'}[v[0]]}${{l:'左',c:'中',r:'右'}[v[1]]}" aria-label="${{t:'上',m:'中',b:'下'}[v[0]]}${{l:'左',c:'中',r:'右'}[v[1]]}"></button>`).join('');
+  box.onclick=e=>{const b=e.target.closest('button');if(!b)return;S[box.dataset.k]=b.dataset.v;save();syncUI();refreshAll()};
+});
+let lblT;
+$('#labelText').addEventListener('input',e=>{
+  S.labelText=e.target.value;e.target.rows=Math.min(3,Math.max(1,S.labelText.split('\n').length));
+  clearTimeout(lblT);lblT=setTimeout(()=>{save();syncUI();refreshAll()},400);
+});
+$('#labelChips').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;S.labelText=b.textContent;S.labelOn=true;save();syncUI();refreshAll()};
+['labelBg','labelColor'].forEach(k=>$('#'+k).onchange=e=>{S[k]=e.target.value;save();refreshAll()});
+$('#mine .lbl').onclick=()=>$('#mine').classList.toggle('closed');
+$$('.sec[data-sec=preset] .presets:not(#myList) .preset').forEach(b=>{const t=b.querySelector('.pt>span');if(t)b.title=t.textContent.replace(/ /g,' ')});
+$('#goCollage').onclick=()=>{S.tab='collage';save();syncUI();renderCollage()};
+$('#advBtn').onclick=()=>{advOpen=!advOpen;syncUI()};
+$('#cutOn').onchange=e=>{S.cutOn=e.target.checked;if(S.cutOn)S.open.cut=true;if(S.cutOn&&S.fmt==='jpeg')S.fmt='png';save();syncUI();refreshAll()};
+['cutSoft','cutHoles'].forEach(k=>$('#'+k).onchange=e=>{S[k]=e.target.checked;save();refreshAll()});
+bindRange('cutTol','cutTol','',refreshAll);
+bindRange('logoSize','logoSize','%',refreshAll);
+bindRange('logoOp','logoOp','%',refreshAll);
+bindRange('logoMargin','logoMargin','%',refreshAll);
+bindRange('labelSize','labelSize','%',refreshAll);
+bindRange('labelMargin','labelMargin','%',refreshAll);
+
+const FMT_NAME={jpeg:'JPG',png:'PNG',webp:'WebP',keep:'原格式'};
+const kbTxt=k=>k>=1000&&k%1000===0?(k/1000)+'MB':k+'KB';
+function syncNameEx(){
+  const ext=S.fmt==='keep'?'.jpg':EXT['image/'+S.fmt];
+  const ex=S.naming==='suffix'?'商品A'+S.suffix+ext:S.naming==='seq'?S.prefix+String(S.seqStart).padStart(2,'0')+ext:'商品A'+ext;
+  $('#nameEx').textContent='例：'+ex;
+}
+let advOpen=false;
+function syncUI(){
+  $$('.seg[data-k]').forEach(seg=>seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on',S[seg.dataset.k]===b.dataset.v)));
+  $$('.tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===S.tab));
+  $$('[data-for]').forEach(s=>s.hidden=s.dataset.for!==S.tab);
+  $$('.sec').forEach(s=>s.classList.toggle('closed',!S.open[s.dataset.sec]));
+  $$('.sec[data-sec]').forEach(s=>{const k=s.dataset.sec;if(S.tab==='batch'&&['size','cut','extras','output','naming'].includes(k))s.hidden=!(advOpen||(k==='cut'&&S.cutOn)||(k==='size'&&S.sizeMode==='fixed'&&!S.cutOn));else if(S.tab==='collage'&&['cut','extras','output'].includes(k))s.hidden=false});
+  $('#advTg').textContent=advOpen?'收起 ▴':'展開 ▾';
+  $('#wBatch').hidden=S.tab!=='batch';$('#wCollage').hidden=S.tab!=='collage';
+  $('#fixedBox').hidden=S.sizeMode!=='fixed';$('#maxBox').hidden=S.sizeMode!=='max';
+  $('#containBox').hidden=S.fit!=='contain';
+  $('#limitBox').hidden=S.mode!=='limit';$('#qualityBox').hidden=S.mode!=='quality';
+  $('#suffixRow').hidden=S.naming!=='suffix';$('#seqRow').hidden=S.naming!=='seq';
+  $('#alphaRow').hidden=S.fmt==='jpeg';
+  $('#bgRow').hidden=S.fmt!=='jpeg'&&S.fmt!=='keep'&&S.alpha;
+  for(const k of['fw','fh','maxEdge','kb','seqStart','cw','ch'])$('#'+k).value=S[k];
+  for(const [k,u] of [['pad','%'],['q',''],['gap','px'],['margin','px'],['logoSize','%'],['logoOp','%'],['logoMargin','%'],['labelSize','%'],['labelMargin','%'],['cutTol','']]){$('#'+k).value=S[k];$('#'+k+'V').textContent=S[k]+u}
+  $('#trim').checked=S.trim;$('#alpha').checked=S.alpha;$('#bg').value=S.bg;$('#cbg').value=S.cbg;
+  $('#suffix').value=S.suffix;$('#prefix').value=S.prefix;
+  $$('#fixedChips .chip').forEach(c=>c.classList.toggle('on',c.dataset.wh===S.fw+','+S.fh));
+  $$('#cChips .chip').forEach(c=>c.classList.toggle('on',c.dataset.wh===S.cw+','+S.ch));
+  $$('#maxChips .chip').forEach(c=>c.classList.toggle('on',+c.dataset.v===S.maxEdge));
+  $$('#kbChips .chip').forEach(c=>c.classList.toggle('on',+c.dataset.v===S.kb));
+  $$('.lay').forEach(b=>b.classList.toggle('on',b.dataset.v===S.layout));
+  $('#cutOn').checked=S.cutOn;$('#cutBox').hidden=!S.cutOn;$('#cutOffHint').hidden=S.cutOn;
+  $('#cutSoft').checked=S.cutSoft;$('#cutHoles').checked=S.cutHoles;
+  $('#sum-cut').textContent=S.cutOn?'開啟':'未使用';
+  for(const k of['frame','logo','label']){$('#'+k+'On').checked=S[k+'On'];$('#'+k+'Box').hidden=!S[k+'On'];$('#'+k+'Card').classList.toggle('on',S[k+'On'])}
+  $$('.pos').forEach(box=>box.querySelectorAll('button').forEach(b=>b.classList.toggle('on',S[box.dataset.k]===b.dataset.v)));
+  $('#labelBg').value=S.labelBg;$('#labelColor').value=S.labelColor;
+  const lt=$('#labelText');if(document.activeElement!==lt){lt.value=S.labelText;lt.rows=Math.min(3,Math.max(1,S.labelText.split('\n').length))}
+  $$('#labelChips .chip').forEach(c=>c.classList.toggle('on',c.textContent===S.labelText));
+  $$('.preset[data-preset]').forEach(b=>b.classList.toggle('on',presetOn(b.dataset.preset)));
+  $$('#myList .uprow').forEach(r=>{const p=myPresets.find(x=>x.id===r.dataset.id);r.querySelector('.preset').classList.toggle('on',!!p&&settingsMatch(p.settings))});
+  // 分區標題旁的目前設定
+  const pm=Object.keys(PRESETS).find(presetOn),um=myPresets.find(p=>settingsMatch(p.settings));
+  $('#sum-preset').textContent=um?um.name:pm?PRESET_NAMES[pm]:'';
+  $('#sum-size').textContent=S.sizeMode==='fixed'?`${S.fw}×${S.fh} · ${S.fit==='contain'?'補白':'裁切'}`:S.sizeMode==='max'?`長邊 ${S.maxEdge}`:'不改尺寸';
+  $('#sum-layout').textContent=LAYOUTS[S.layout].length+' 格';
+  $('#sum-canvas').textContent=`${S.cw}×${S.ch}`;
+  const ex=[S.frameOn&&'框',S.logoOn&&'Logo',S.labelOn&&'標籤'].filter(Boolean);
+  $('#sum-extras').textContent=ex.length?ex.join(' · '):'未使用';
+  $('#sum-output').textContent=`${FMT_NAME[S.fmt]} · ${S.mode==='limit'?kbTxt(S.kb)+' 內':'品質 '+S.q}`;
+  $('#sum-naming').textContent={keep:'維持原名',suffix:'加後綴',seq:'流水號'}[S.naming];
+  $('#kbQuick').value=S.kb;$('#kbqRow').hidden=S.mode!=='limit';
+  renderPlan();
+  syncNameEx();
+}
+// 工作區最上面用一句話說清楚：每張圖會被怎麼處理
+function renderPlan(){
+  const st=[S.sizeMode==='fixed'?`改成 ${S.fw}×${S.fh}（${S.fit==='contain'?'不足補白':'裁切填滿'}）`:S.sizeMode==='max'?`長邊縮到 ${S.maxEdge} 以內`:'尺寸不變'];
+  if(S.cutOn)st.push('去背');
+  if(S.frameOn)st.push('套框');if(S.logoOn)st.push('加 Logo');if(S.labelOn&&S.labelText.trim())st.push('加標籤');
+  st.push(S.fmt==='keep'?'維持原格式':'轉成 '+FMT_NAME[S.fmt]);
+  st.push(S.mode==='limit'?`壓到 ${kbTxt(S.kb)} 內`:`品質 ${S.q}`);
+  $('#plan').innerHTML='<span class="pl">每張圖會：</span>'+st.map(s=>`<span class="st"><b>${esc(s)}</b></span>`).join('<span class="ar">→</span>');
+}
+buildLayoutBtns();syncUI();renderCollage();loadPresets();restoreAssets();
+<@@SC@@/script>
+</body>
+</html>
+</script>
+<script>
+(function(){
+  var KEY='opstools.tab',loaded={};
+  function tpl(id){return document.getElementById('tpl-'+id).textContent.split('<@@SC@@/script').join('</script').split('<@@CM@@!--').join('<!--');}
+  function show(t){
+    if(t!=='qa'&&t!=='img')t='qa';
+    var f=document.getElementById('f-'+t);
+    if(!loaded[t]){loaded[t]=1;f.srcdoc=tpl(t);}
+    ['qa','img'].forEach(function(k){
+      document.getElementById('f-'+k).classList.toggle('on',k===t);
+    });
+    document.querySelectorAll('.tab').forEach(function(b){
+      var on=b.dataset.t===t;b.classList.toggle('on',on);b.setAttribute('aria-selected',on);
+    });
+    try{localStorage.setItem(KEY,t)}catch(e){}
+  }
+  document.querySelectorAll('.tab').forEach(function(b){b.addEventListener('click',function(){show(b.dataset.t)})});
+  var init=(location.hash||'').replace('#','');
+  if(!init){try{init=localStorage.getItem(KEY)}catch(e){}}
+  // 公司帳號登入：只放行 @tsagroup.com.tw（本機 file:// 或 localhost 直接開，不用登入）
+  var CID='840553019041-3q2chbo2hb5fvi4pb5gkq3gtrqpmcdbs.apps.googleusercontent.com',DOM='tsagroup.com.tw',TK='opstools.cred';
+  var gate=document.getElementById('gate'),msg=document.getElementById('gmsg');
+  function openApp(){gate.hidden=true;show(init);}
+  function claims(c){try{var s=c.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');return JSON.parse(decodeURIComponent(escape(atob(s))));}catch(e){return null;}}
+  function okCred(c){
+    var p=claims(c);
+    return !!p&&p.aud===CID&&p.hd===DOM&&p.email_verified!==false&&typeof p.email==='string'&&p.email.toLowerCase().slice(-(DOM.length+1))==='@'+DOM&&p.exp*1000>Date.now();
+  }
+  if(location.protocol==='file:'||/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){openApp();return;}
+  var saved='';try{saved=localStorage.getItem(TK)||'';}catch(e){}
+  if(saved&&okCred(saved)){openApp();return;}
+  var g=document.createElement('script');
+  g.src='https://accounts.google.com/gsi/client';g.async=true;
+  g.onerror=function(){msg.textContent='登入元件載入失敗，請檢查網路後重新整理';};
+  g.onload=function(){
+    google.accounts.id.initialize({
+      client_id:CID,
+      callback:function(r){
+        if(r&&r.credential&&okCred(r.credential)){try{localStorage.setItem(TK,r.credential);}catch(e){}openApp();}
+        else msg.textContent='這個帳號不是公司帳號，請改用 @tsagroup.com.tw 登入';
+      }
+    });
+    google.accounts.id.renderButton(document.getElementById('gbtn'),{theme:'outline',size:'large',text:'signin_with',locale:'zh-TW'});
+  };
+  document.head.appendChild(g);
+})();
+</script>
+</body>
+</html>
