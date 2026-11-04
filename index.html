@@ -307,6 +307,33 @@ function parse(text,norm){
       if(mode==='q')cur.q+=line;else cur.a.push(line);
     }
   }
+  // 完全沒有 Q／A 標記時，自動判斷分段（只分段，文字一個字都不動）
+  if(!items.length&&text.trim()){
+    const L=text.split('\n').map(s=>s.trim());
+    const nonEmpty=L.filter(Boolean);
+    const isQ=s=>/[？?]\s*["”」』）)]*$/.test(s);
+    let how='';
+    if(nonEmpty.some(isQ)){
+      let c=null;
+      for(const s of L){
+        if(!s){if(c&&c.a.length&&c.a[c.a.length-1]!=='')c.a.push('');continue;}
+        if(isQ(s)){c={q:s,a:[]};items.push(c);}
+        else{if(!c){c={q:'',a:[]};items.push(c);}c.a.push(s);}
+      }
+      how='以「？」結尾的行當問題，其後到下一個問題之前當答案';
+    }else if(L.some(s=>!s)){
+      let c=null,fresh=true;
+      for(const s of L){
+        if(!s){fresh=true;continue;}
+        if(fresh){c={q:s,a:[]};items.push(c);fresh=false;}else c.a.push(s);
+      }
+      how='每一段（空行分隔）的第一行當問題，其餘當答案';
+    }else if(nonEmpty.length>=2&&nonEmpty.length%2===0){
+      for(let i=0;i<nonEmpty.length;i+=2)items.push({q:nonEmpty[i],a:[nonEmpty[i+1]]});
+      how='單數行當問題、雙數行當答案';
+    }
+    if(how)fixes.add('沒有 Q／A 標記，已自動判斷：'+how+'，請確認分段是否正確');
+  }
   let changed=0;
   const P={'?':'？','!':'！',',':'，',';':'；',':':'：',')':'）'};
   const cjk=/[㐀-鿿　-〿＀-￯]/;
