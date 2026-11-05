@@ -846,7 +846,8 @@ input[type=range]{flex:1;min-width:120px;accent-color:var(--accent)}
 /* 右邊只留一個區塊：放圖後直接顯示成品，旁邊只有「加入更多／清空／下載」 */
 #wBatch>.plan,#wBatch>.stp{display:none}
 #bar .stats,#pdfBtn,#dirBtn{display:none!important}
-.drop[hidden],.row[hidden],.mine[hidden]{display:none}.grid.one{grid-template-columns:minmax(0,560px)}
+.drop[hidden],.row[hidden],.mine[hidden]{display:none}
+#bar{position:static}.grid.one{grid-template-columns:minmax(0,560px)}
 .card{background:#fff;border:2px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;transition:border-color .15s,box-shadow .15s}
 .card:hover{border-color:var(--line-strong);box-shadow:var(--shadow)}
 .card.dragging{opacity:.4}
@@ -1558,6 +1559,39 @@ function cutBackground(src,tol,soft,holes,shadow,gt){
       let v=0;for(const q of outer){const k=q*4,dr=d[k]-mr,dg=d[k+1]-mg,db=d[k+2]-mb;v+=dr*dr+dg*dg+db*db}
       if(Math.sqrt(v/cn)>=75)for(const p of rc)m[p]=1;
     }
+    // 剝邊：貼著已去掉背景、又細又近白的像素（商品邊緣的白毛邊、零碎白點）從背景邊緣往內最多剝 4px
+    // 「厚」的白色（圖案、標籤、商品本體）= 腐蝕兩圈後再長回兩圈，不會被剝
+    const thick=new Uint8Array(n);
+    let fr2=[];
+    for(let p=0;p<n;p++)if(er[p]){thick[p]=1;fr2.push(p)}
+    for(let r=0;r<2;r++){
+      const nf=[];
+      for(const p of fr2){
+        const px=p%w;
+        if(px>0&&cand[p-1]&&!thick[p-1]){thick[p-1]=1;nf.push(p-1)}
+        if(px<w-1&&cand[p+1]&&!thick[p+1]){thick[p+1]=1;nf.push(p+1)}
+        if(p>=w&&cand[p-w]&&!thick[p-w]){thick[p-w]=1;nf.push(p-w)}
+        if(p<n-w&&cand[p+w]&&!thick[p+w]){thick[p+w]=1;nf.push(p+w)}
+      }
+      fr2=nf;
+    }
+    const thin=p=>cand[p]&&!thick[p]&&!m[p];
+    let seeds=[];
+    for(let p=0;p<n;p++){
+      if(!thin(p))continue;const px=p%w;
+      if((px>0&&m[p-1]===1)||(px<w-1&&m[p+1]===1)||(p>=w&&m[p-w]===1)||(p<n-w&&m[p+w]===1))seeds.push(p);
+    }
+    for(let depth=0;depth<4&&seeds.length;depth++){
+      const next=[];
+      for(const p of seeds){
+        if(m[p])continue;m[p]=1;const px=p%w;
+        if(px>0&&thin(p-1))next.push(p-1);
+        if(px<w-1&&thin(p+1))next.push(p+1);
+        if(p>=w&&thin(p-w))next.push(p-w);
+        if(p<n-w&&thin(p+w))next.push(p+w);
+      }
+      seeds=next;
+    }
   }
   // 影子（標成 2，只有選「變淡影」或「去掉」才做）：從背景往內，沿著「越往內越暗或持平、沒有顏色、變化平緩」的像素走
   // 商品的輪廓線比裡面暗，跨過輪廓線再往內會變亮 → 走不進去
@@ -1917,7 +1951,7 @@ async function processOne(it,stale=()=>false){
 function renderAll(){items.forEach(it=>paintItem(it));renderSum()}
 function renderSum(){
   const has=items.length>0;
-  $('#bar').hidden=!has;$('#stp3').hidden=!has;$('#feats').hidden=has;$('#drop').classList.toggle('compact',has);$('#drop').hidden=has;listEl.classList.toggle('one',items.length===1);
+  $('#bar').hidden=items.length<2;$('#stp3').hidden=!has;$('#feats').hidden=has;$('#drop').classList.toggle('compact',has);$('#drop').hidden=has;listEl.classList.toggle('one',items.length===1);
   if(!has){listEl.innerHTML='';return}
   const valid=items.filter(i=>i.status!=='err'),done=valid.filter(i=>i.res);
   const busyN=items.filter(i=>i.status==='run'||i.status==='wait').length,errN=items.length-valid.length;
