@@ -586,7 +586,8 @@ $('symChips').addEventListener('click',e=>{const c=e.target.closest('.chip');if(
 ['symC','symO'].forEach(id=>$(id).addEventListener('input',()=>{renderSyms();build();}));
 ['title','withCss','noJs','showTitle','firstOpen','numQ','normP','fsT','fsI','fsQ','fsA'].forEach(id=>$(id).addEventListener('input',build));
 pullCloud(false);
-document.addEventListener('pointerdown',()=>pullCloud(true));
+// 只有展開「調整顏色／儲存品牌」時才同步雲端（不在一點頁面就跳授權視窗）
+(()=>{const dt=document.querySelector('details.adv');if(dt)dt.addEventListener('toggle',()=>{if(dt.open)pullCloud(true);});})();
 renderChips();renderSyms();build();
 <@@SC@@/script>
 </body>
@@ -2748,6 +2749,7 @@ buildLayoutBtns();syncUI();renderCollage();loadPresets();restoreAssets();
   function okCred(c){var p=claims(c);return okClaims(p)&&p.aud===CID&&p.exp*1000>Date.now();}
   function remember(email){try{localStorage.setItem(TK,JSON.stringify({e:email,x:Date.now()+12*3600*1000}));}catch(e){}}
   function savedOk(){try{var o=JSON.parse(localStorage.getItem(TK)||'null');return !!o&&typeof o.e==='string'&&o.e.toLowerCase().slice(-(DOM.length+1))==='@'+DOM&&o.x>Date.now();}catch(e){return false;}}
+  function savedEmail(){try{var o=JSON.parse(localStorage.getItem(TK)||'null');return (o&&o.e)||'';}catch(e){return '';}}
   function deny(){msg.textContent='這個帳號不是公司帳號，請改用 @tsagroup.com.tw 登入';}
   if(location.protocol==='file:'||/^(localhost|127\.0\.0\.1)$/.test(location.hostname)){openApp();return;}
   // 雲端設定：存在使用者自己 Google 雲端硬碟的「應用程式專用資料夾」，換電腦也跟著帳號走
@@ -2756,7 +2758,7 @@ buildLayoutBtns();syncUI();renderCollage();loadPresets();restoreAssets();
   function getToken(interactive){
     if(tok.t&&tok.x>Date.now())return Promise.resolve(tok.t);
     if(!interactive||!tcCloud)return Promise.reject(new Error('no-token'));
-    return new Promise(function(res,rej){pend={res:res,rej:rej};tcCloud.requestAccessToken({prompt:''});});
+    return new Promise(function(res,rej){pend={res:res,rej:rej};tcCloud.requestAccessToken({prompt:'',hint:savedEmail()});});
   }
   function dget(t,url){return fetch(url,{headers:{Authorization:'Bearer '+t}}).then(function(r){if(!r.ok)throw new Error(r.status);return r;});}
   function findFile(t){
