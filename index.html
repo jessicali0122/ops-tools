@@ -846,9 +846,7 @@ input[type=range]{flex:1;min-width:120px;accent-color:var(--accent)}
 /* 右邊只留一個區塊：放圖後直接顯示成品，旁邊只有「加入更多／清空／下載」 */
 #wBatch>.plan,#wBatch>.stp{display:none}
 #bar .stats,#pdfBtn,#dirBtn{display:none!important}
-.drop[hidden],.row[hidden],.mine[hidden]{display:none}
-.bd.pocket{cursor:pointer;text-decoration:underline}
-.grid.one{grid-template-columns:minmax(0,560px)}
+.drop[hidden],.row[hidden],.mine[hidden]{display:none}.grid.one{grid-template-columns:minmax(0,560px)}
 .card{background:#fff;border:2px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;transition:border-color .15s,box-shadow .15s}
 .card:hover{border-color:var(--line-strong);box-shadow:var(--shadow)}
 .card.dragging{opacity:.4}
@@ -1490,12 +1488,80 @@ function cutBackground(src,tol,soft,holes,shadow,gt){
       if(p<n-w&&!m[q=p+w]&&canGo(q)){m[q]=1;st[sp++]=q}
     }
   }
+  // 被包住的背景色區塊：自動分辨「商品之間的縫隙」和「商品上的白色圖案／標籤」
+  // 只看這塊白色「最外圍」碰到的顏色：縫隙四周是好幾種東西（黑針、木頭、盒子…）→ 顏色變化大 → 去掉
+  // 白色圖案／標籤四周是同一種底色 → 顏色變化小 → 保留；標籤裡面的字是被框起來的島，不算外圍
+  if(!holes&&n<=6e6){
+    const cand=new Uint8Array(n);
+    for(let p=0;p<n;p++)cand[p]=(!m[p]&&d[p*4+3]>=16&&isBgM(p))?1:0;
+    // 腐蝕兩圈：把貼著商品邊緣、細細一圈的近白色像素，跟真正的空隙切開（不然縫隙會跟那圈連成一大塊）
+    let er=cand;
+    for(let pass=0;pass<2;pass++){
+      const nx=new Uint8Array(n);
+      for(let p=w+1;p<n-w-1;p++){
+        if(!er[p])continue;const px=p%w;
+        if(px>0&&px<w-1&&er[p-1]&&er[p+1]&&er[p-w]&&er[p+w])nx[p]=1;
+      }
+      er=nx;
+    }
+    const cm=new Int32Array(n),stk=new Int32Array(n),rm=new Int32Array(n),ext=new Int32Array(n);let cid=0;
+    for(let p0=0;p0<n;p0++){
+      if(!er[p0]||cm[p0])continue;
+      cid++;let sp=0;const rc=[];stk[sp++]=p0;cm[p0]=cid;
+      while(sp){
+        const p=stk[--sp];rc.push(p);rm[p]=cid;const px=p%w;
+        if(px>0&&er[p-1]&&!cm[p-1]){cm[p-1]=cid;stk[sp++]=p-1}
+        if(px<w-1&&er[p+1]&&!cm[p+1]){cm[p+1]=cid;stk[sp++]=p+1}
+        if(p>=w&&er[p-w]&&!cm[p-w]){cm[p-w]=cid;stk[sp++]=p-w}
+        if(p<n-w&&er[p+w]&&!cm[p+w]){cm[p+w]=cid;stk[sp++]=p+w}
+      }
+      if(rc.length<4)continue;
+      // 長回兩圈（只長在原本就是背景色的像素上），還原被腐蝕掉的邊
+      let fr=rc.slice();
+      for(let r=0;r<2;r++){
+        const nf=[];
+        for(const p of fr){
+          const px=p%w;
+          for(let t=0;t<4;t++){
+            let q;
+            if(t===0){if(px===0)continue;q=p-1}else if(t===1){if(px===w-1)continue;q=p+1}else if(t===2){if(p<w)continue;q=p-w}else{if(p>=n-w)continue;q=p+w}
+            if(cand[q]&&rm[q]!==cid){rm[q]=cid;rc.push(q);nf.push(q)}
+          }
+        }
+        fr=nf;
+      }
+      if(rc.length<12)continue;
+      let bx0=w,bx1=0,by0=h,by1=0;
+      for(const p of rc){const px=p%w,py=(p-px)/w;if(px<bx0)bx0=px;if(px>bx1)bx1=px;if(py<by0)by0=py;if(py>by1)by1=py}
+      // 外圍鄰居 = 從外框往內填碰得到的、不是背景色的像素；被這塊白色整個圍住的島（標籤裡的字）碰不到
+      const x0=Math.max(0,bx0-1),x1=Math.min(w-1,bx1+1),y0=Math.max(0,by0-1),y1=Math.min(h-1,by1+1);
+      let sp2=0;
+      const push=q=>{if(rm[q]===cid||ext[q]===cid)return;ext[q]=cid;stk[sp2++]=q};
+      for(let xx=x0;xx<=x1;xx++){push(y0*w+xx);push(y1*w+xx)}
+      for(let yy=y0;yy<=y1;yy++){push(yy*w+x0);push(yy*w+x1)}
+      while(sp2){
+        const p=stk[--sp2],px=p%w,py=(p-px)/w;
+        if(px>x0)push(p-1);if(px<x1)push(p+1);if(py>y0)push(p-w);if(py<y1)push(p+w);
+      }
+      const outer=[];
+      for(const p of rc){
+        const px=p%w;
+        for(let t=0;t<4;t++){
+          let q;
+          if(t===0){if(px===0)continue;q=p-1}else if(t===1){if(px===w-1)continue;q=p+1}else if(t===2){if(p<w)continue;q=p-w}else{if(p>=n-w)continue;q=p+w}
+          if(ext[q]===cid&&!cand[q]&&!m[q]&&d[q*4+3]>=16){ext[q]=-cid;outer.push(q)}
+        }
+      }
+      if(outer.length<6)continue;
+      let mr=0,mg=0,mb=0;for(const q of outer){const k=q*4;mr+=d[k];mg+=d[k+1];mb+=d[k+2]}
+      const cn=outer.length;mr/=cn;mg/=cn;mb/=cn;
+      let v=0;for(const q of outer){const k=q*4,dr=d[k]-mr,dg=d[k+1]-mg,db=d[k+2]-mb;v+=dr*dr+dg*dg+db*db}
+      if(Math.sqrt(v/cn)>=75)for(const p of rc)m[p]=1;
+    }
+  }
   // 影子（標成 2，只有選「變淡影」或「去掉」才做）：從背景往內，沿著「越往內越暗或持平、沒有顏色、變化平緩」的像素走
   // 商品的輪廓線比裡面暗，跨過輪廓線再往內會變亮 → 走不進去
   // 但淺灰商品直接坐在一樣深的影子上、又沒有輪廓線時分不出來，所以預設「保留原樣」不做
-  // 被包住、跟背景幾乎同色卻沒被去掉的區塊（例如兩件商品中間的縫隙）：只計數，讓介面提示使用者
-  let pocket=0;
-  if(!holes)for(let p=0;p<n;p++)if(!m[p]&&d[p*4+3]>=16&&mdist2(p)<=T2*.5)pocket++;
   if(shadow==='soft'||shadow==='remove'){
     const st=new Int32Array(n),PM=new Uint8Array(n);let sp=0;// PM = 這條路上最暗到多少
     const Lbg=p=>(MR[p]*77+MG[p]*150+MB[p]*29)/256;
@@ -1572,7 +1638,6 @@ function cutBackground(src,tol,soft,holes,shadow,gt){
     }
   }
   x.putImageData(img,0,0);
-  c.pocket=pocket;
   return c;
 }
 // 處理前的來源圖：先裁切／旋轉，再去背
@@ -1695,9 +1760,7 @@ async function processFile(file,orig,adj,edit){
   applyOverlays(ctx,W,H);
   // 固定尺寸、尺寸不變：都不可以為了壓大小偷偷縮圖，只能降畫質
   const r=await encode(c,mime,fixedMode||S.sizeMode==='none');
-  r.mime=mime;r.w=r.cv.width;r.h=r.cv.height;r.sw=box.w;r.sh=box.h;
-  r.pocket=(S.cutOn&&!S.cutHoles&&bmp.pocket>=Math.max(120,bmp.width*bmp.height*.0005))?bmp.pocket:0;
-  // 不改尺寸、同格式，壓完反而變大 → 保留原檔
+  r.mime=mime;r.w=r.cv.width;r.h=r.cv.height;r.sw=box.w;r.sh=box.h;  // 不改尺寸、同格式，壓完反而變大 → 保留原檔
   const untouched=!edit&&!S.cutOn&&(S.sizeMode==='none'||(S.sizeMode==='max'&&W===bmp.width&&H===bmp.height));
   if(untouched&&!overlaysOn()&&mime===file.type&&r.blob.size>=file.size&&(S.mode==='quality'||file.size<=S.kb*1024)){
     r.blob=file;r.kept=true;r.over=false;
@@ -1808,10 +1871,7 @@ function paintItem(it,el=$('#it'+it.id)){
   if(!r.kept&&(r.sw??it.w)<r.w*.6&&(r.sh??it.h)<r.h*.6)b+='<span class="bd warn">原圖太小，放大後可能模糊</span>';
   if(r.pngOver)b+='<span class="bd warn">PNG 壓不到，建議改 JPG</span>';
   if(it.file.type==='image/gif')b+='<span class="bd info">GIF 動畫只保留第一格</span>';
-  if(r.pocket)b+='<span class="bd warn pocket" title="商品之間被包住的白色縫隙沒去掉，點一下就會去掉（白色商品請不要用，會被一起挖掉）">有縫隙沒去掉・點此去掉</span>';
   bd.innerHTML=b;
-  const pk=bd.querySelector('.pocket');
-  if(pk)pk.onclick=()=>{S.cutHoles=true;save();syncUI();rerun()};
 }
 
 // 同時處理 2 張（編碼在背景執行緒，兩張交錯跑比較快）
