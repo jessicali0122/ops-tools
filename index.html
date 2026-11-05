@@ -2741,7 +2741,7 @@ buildLayoutBtns();syncUI();renderCollage();loadPresets();restoreAssets();
   var init=(location.hash||'').replace('#','');
   if(!init){try{init=localStorage.getItem(KEY)}catch(e){}}
   // 公司帳號登入：只放行 @tsagroup.com.tw（本機 file:// 或 localhost 直接開，不用登入）
-  var CID='840553019041-3q2chbo2hb5fvi4pb5gkq3gtrqpmcdbs.apps.googleusercontent.com',DOM='tsagroup.com.tw',TK='opstools.cred';
+  var CID='645628565819-tq01gncf3cmvtrfo5ffklu2f69jdlbrk.apps.googleusercontent.com',DOM='tsagroup.com.tw',TK='opstools.cred';
   var gate=document.getElementById('gate'),msg=document.getElementById('gmsg');
   function openApp(){gate.hidden=true;show(init);}
   function claims(c){try{var s=c.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');return JSON.parse(decodeURIComponent(escape(atob(s))));}catch(e){return null;}}
