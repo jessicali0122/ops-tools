@@ -843,6 +843,12 @@ input[type=range]{flex:1;min-width:120px;accent-color:var(--accent)}
 
 /* 圖片卡片 */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
+/* 右邊只留一個區塊：放圖後直接顯示成品，旁邊只有「加入更多／清空／下載」 */
+#wBatch>.plan,#wBatch>.stp{display:none}
+#bar .stats,#pdfBtn,#dirBtn{display:none!important}
+.drop[hidden],.row[hidden],.mine[hidden]{display:none}
+.bd.pocket{cursor:pointer;text-decoration:underline}
+.grid.one{grid-template-columns:minmax(0,560px)}
 .card{background:#fff;border:2px solid var(--line);border-radius:16px;overflow:hidden;display:flex;flex-direction:column;transition:border-color .15s,box-shadow .15s}
 .card:hover{border-color:var(--line-strong);box-shadow:var(--shadow)}
 .card.dragging{opacity:.4}
@@ -964,15 +970,12 @@ input[type=range]{flex:1;min-width:120px;accent-color:var(--accent)}
       <div class="brand"><b>圖片處理工具</b><small>IMAGE TOOL</small></div>
       <span class="local" title="所有處理都在這台電腦的瀏覽器內完成，圖片不會上傳到任何地方"><i class="ico" data-ic="lock"></i>本機處理・不上傳</span>
     </div>
-    <nav class="tabs" id="backNav" hidden>
-      <button class="tab" data-tab="batch"><i class="ico" data-ic="layers"></i>← 回到壓縮／改尺寸</button>
-    </nav>
   </div>
 </header>
 
 <main>
   <aside class="panel" id="panel">
-    <section class="sec" data-sec="preset" data-for="batch">
+    <section class="sec" data-sec="preset">
       <button class="sec-hd" type="button"><i class="ico chev" data-ic="chev"></i><span class="sec-t"><i class="stn">1</i>選要做什麼</span><span class="sec-en">TASK</span><span class="sec-sum" id="sum-preset"></span></button>
       <div class="sec-bd">
         <div class="presets">
@@ -1183,6 +1186,7 @@ input[type=range]{flex:1;min-width:120px;accent-color:var(--accent)}
       </div>
       <div class="acts">
         <span class="busy" id="busy" hidden><span class="spin"></span><span id="busyT">處理中</span></span>
+        <button class="btn ghost" id="addBtn" type="button"><i class="ico" data-ic="plus"></i>加入更多圖片</button>
         <button class="btn ghost" id="clearBtn">清空</button>
         <button class="btn" id="pdfBtn" title="把這些圖片合併成一份 PDF"><i class="ico" data-ic="zip"></i>轉成 PDF</button>
         <button class="btn" id="dirBtn" title="直接存進電腦裡的資料夾，不用解壓縮（同名檔案不會被覆蓋）" hidden><i class="ico" data-ic="folder"></i>存到資料夾</button>
@@ -1489,6 +1493,9 @@ function cutBackground(src,tol,soft,holes,shadow,gt){
   // 影子（標成 2，只有選「變淡影」或「去掉」才做）：從背景往內，沿著「越往內越暗或持平、沒有顏色、變化平緩」的像素走
   // 商品的輪廓線比裡面暗，跨過輪廓線再往內會變亮 → 走不進去
   // 但淺灰商品直接坐在一樣深的影子上、又沒有輪廓線時分不出來，所以預設「保留原樣」不做
+  // 被包住、跟背景幾乎同色卻沒被去掉的區塊（例如兩件商品中間的縫隙）：只計數，讓介面提示使用者
+  let pocket=0;
+  if(!holes)for(let p=0;p<n;p++)if(!m[p]&&d[p*4+3]>=16&&mdist2(p)<=T2*.5)pocket++;
   if(shadow==='soft'||shadow==='remove'){
     const st=new Int32Array(n),PM=new Uint8Array(n);let sp=0;// PM = 這條路上最暗到多少
     const Lbg=p=>(MR[p]*77+MG[p]*150+MB[p]*29)/256;
@@ -1565,6 +1572,7 @@ function cutBackground(src,tol,soft,holes,shadow,gt){
     }
   }
   x.putImageData(img,0,0);
+  c.pocket=pocket;
   return c;
 }
 // 處理前的來源圖：先裁切／旋轉，再去背
@@ -1688,6 +1696,7 @@ async function processFile(file,orig,adj,edit){
   // 固定尺寸、尺寸不變：都不可以為了壓大小偷偷縮圖，只能降畫質
   const r=await encode(c,mime,fixedMode||S.sizeMode==='none');
   r.mime=mime;r.w=r.cv.width;r.h=r.cv.height;r.sw=box.w;r.sh=box.h;
+  r.pocket=(S.cutOn&&!S.cutHoles&&bmp.pocket>=Math.max(120,bmp.width*bmp.height*.0005))?bmp.pocket:0;
   // 不改尺寸、同格式，壓完反而變大 → 保留原檔
   const untouched=!edit&&!S.cutOn&&(S.sizeMode==='none'||(S.sizeMode==='max'&&W===bmp.width&&H===bmp.height));
   if(untouched&&!overlaysOn()&&mime===file.type&&r.blob.size>=file.size&&(S.mode==='quality'||file.size<=S.kb*1024)){
@@ -1799,7 +1808,10 @@ function paintItem(it,el=$('#it'+it.id)){
   if(!r.kept&&(r.sw??it.w)<r.w*.6&&(r.sh??it.h)<r.h*.6)b+='<span class="bd warn">原圖太小，放大後可能模糊</span>';
   if(r.pngOver)b+='<span class="bd warn">PNG 壓不到，建議改 JPG</span>';
   if(it.file.type==='image/gif')b+='<span class="bd info">GIF 動畫只保留第一格</span>';
+  if(r.pocket)b+='<span class="bd warn pocket" title="商品之間被包住的白色縫隙沒去掉，點一下就會去掉（白色商品請不要用，會被一起挖掉）">有縫隙沒去掉・點此去掉</span>';
   bd.innerHTML=b;
+  const pk=bd.querySelector('.pocket');
+  if(pk)pk.onclick=()=>{S.cutHoles=true;save();syncUI();rerun()};
 }
 
 // 同時處理 2 張（編碼在背景執行緒，兩張交錯跑比較快）
@@ -1845,7 +1857,7 @@ async function processOne(it,stale=()=>false){
 function renderAll(){items.forEach(it=>paintItem(it));renderSum()}
 function renderSum(){
   const has=items.length>0;
-  $('#bar').hidden=!has;$('#stp3').hidden=!has;$('#feats').hidden=has;$('#drop').classList.toggle('compact',has);
+  $('#bar').hidden=!has;$('#stp3').hidden=!has;$('#feats').hidden=has;$('#drop').classList.toggle('compact',has);$('#drop').hidden=has;listEl.classList.toggle('one',items.length===1);
   if(!has){listEl.innerHTML='';return}
   const valid=items.filter(i=>i.status!=='err'),done=valid.filter(i=>i.res);
   const busyN=items.filter(i=>i.status==='run'||i.status==='wait').length,errN=items.length-valid.length;
@@ -2000,16 +2012,18 @@ $('#dirBtn').onclick=async()=>{
   try{const n=await saveToDir(dir,await batchEntries());toast(`已存 ${n} 張到「${dir.name}」`)}
   catch(e){console.warn(e);toast('存檔失敗，請改用打包下載')}
 };
-$('#clearBtn').onclick=()=>{
+function clearItems(){
   items.forEach(it=>{URL.revokeObjectURL(it.origUrl);if(it.res?.url&&!it.res.kept)URL.revokeObjectURL(it.res.url)});
   items=[];runToken++;listEl.innerHTML='';renderSum();
-};
+}
+$('#clearBtn').onclick=clearItems;
 
 /* ---------- 拖放 / 選檔 / 貼上 ---------- */
 const drop=$('#drop'),fileIn=$('#file');
 drop.onclick=()=>fileIn.click();
 drop.addEventListener('keydown',e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();fileIn.click()}});
 fileIn.onchange=()=>{addFiles(fileIn.files);fileIn.value=''};
+$('#addBtn').onclick=()=>fileIn.click();
 async function filesFromDT(dt){
   const out=[],its=[...(dt.items||[])].map(i=>i.webkitGetAsEntry&&i.webkitGetAsEntry()).filter(Boolean);
   if(!its.length)return[...dt.files];
@@ -2578,7 +2592,7 @@ const PRESETS={
 };
 const PRESET_NAMES={compress:'壓縮圖檔',png2jpg:'PNG 轉 JPG',shrink:'大圖縮小',product:'置中補白・調整比例',cutwhite:'去背成透明 PNG'};
 const presetOn=k=>Object.entries(PRESETS[k]).every(([key,v])=>S[key]===v);
-$$('.preset[data-preset]').forEach(b=>b.onclick=()=>{Object.assign(S,PRESETS[b.dataset.preset]);if(S.cutOn)S.open.cut=true;if(S.sizeMode==='fixed'&&!S.cutOn)S.open.size=true;save();syncUI();rerun();toast('已套用：'+PRESET_NAMES[b.dataset.preset])});
+$$('.preset[data-preset]').forEach(b=>b.onclick=()=>{if(items.length)clearItems();S.tab='batch';S.cutHoles=false;Object.assign(S,PRESETS[b.dataset.preset]);if(S.cutOn)S.open.cut=true;if(S.sizeMode==='fixed'&&!S.cutOn)S.open.size=true;save();syncUI();rerun();toast('已套用：'+PRESET_NAMES[b.dataset.preset])});
 
 $$('.sec').forEach(sec=>sec.querySelector('.sec-hd').addEventListener('click',()=>{const k=sec.dataset.sec;S.open[k]=!S.open[k];save();syncUI()}));
 $$('.seg[data-k]').forEach(seg=>seg.onclick=e=>{
@@ -2662,7 +2676,6 @@ let advOpen=false;
 function syncUI(){
   $$('.seg[data-k]').forEach(seg=>seg.querySelectorAll('button').forEach(b=>b.classList.toggle('on',S[seg.dataset.k]===b.dataset.v)));
   $$('.tab').forEach(t=>t.classList.toggle('on',t.dataset.tab===S.tab));
-  $('#backNav').hidden=S.tab!=='collage';
   $$('[data-for]').forEach(s=>s.hidden=s.dataset.for!==S.tab);
   $$('.sec').forEach(s=>s.classList.toggle('closed',!S.open[s.dataset.sec]));
   $$('.sec[data-sec]').forEach(s=>{const k=s.dataset.sec;if(S.tab==='batch'&&['size','cut','extras','output','naming'].includes(k))s.hidden=!(advOpen||(k==='cut'&&S.cutOn)||(k==='size'&&S.sizeMode==='fixed'&&!S.cutOn));else if(S.tab==='collage'&&['cut','extras','output'].includes(k))s.hidden=false});
@@ -2691,11 +2704,14 @@ function syncUI(){
   $('#labelBg').value=S.labelBg;$('#labelColor').value=S.labelColor;
   const lt=$('#labelText');if(document.activeElement!==lt){lt.value=S.labelText;lt.rows=Math.min(3,Math.max(1,S.labelText.split('\n').length))}
   $$('#labelChips .chip').forEach(c=>c.classList.toggle('on',c.textContent===S.labelText));
-  $$('.preset[data-preset]').forEach(b=>b.classList.toggle('on',presetOn(b.dataset.preset)));
-  $$('#myList .uprow').forEach(r=>{const p=myPresets.find(x=>x.id===r.dataset.id);r.querySelector('.preset').classList.toggle('on',!!p&&settingsMatch(p.settings))});
+  const inBatch=S.tab==='batch';
+  $$('.preset[data-preset]').forEach(b=>b.classList.toggle('on',inBatch&&presetOn(b.dataset.preset)));
+  $('#goCollage').classList.toggle('on',!inBatch);
+  $('#kbqRow').hidden=!inBatch;$('#mine').hidden=!inBatch;
+  $$('#myList .uprow').forEach(r=>{const p=myPresets.find(x=>x.id===r.dataset.id);r.querySelector('.preset').classList.toggle('on',inBatch&&!!p&&settingsMatch(p.settings))});
   // 分區標題旁的目前設定
   const pm=Object.keys(PRESETS).find(presetOn),um=myPresets.find(p=>settingsMatch(p.settings));
-  $('#sum-preset').textContent=um?um.name:pm?PRESET_NAMES[pm]:'';
+  $('#sum-preset').textContent=!inBatch?'組合圖':um?um.name:pm?PRESET_NAMES[pm]:'';
   $('#sum-size').textContent=S.sizeMode==='fixed'?`${S.fw}×${S.fh} · ${S.fit==='contain'?'補白':'裁切'}`:S.sizeMode==='max'?`長邊 ${S.maxEdge}`:'不改尺寸';
   $('#sum-layout').textContent=LAYOUTS[S.layout].length+' 格';
   $('#sum-canvas').textContent=`${S.cw}×${S.ch}`;
