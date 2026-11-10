@@ -2789,7 +2789,7 @@ $('#labelChips').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;S.la
 $('#mine .lbl').onclick=()=>$('#mine').classList.toggle('closed');
 $$('.sec[data-sec=preset] .presets:not(#myList) .preset').forEach(b=>{const t=b.querySelector('.pt>span');if(t)b.title=t.textContent.replace(/ /g,' ')});
 /* ---------- 壓縮 PDF：每頁畫成圖片、壓成 JPG，再組回 PDF（pdf.js 第一次用到才載入） ---------- */
-const PDFQ={high:{dpi:150,q:.8},std:{dpi:110,q:.7},min:{dpi:80,q:.55}};
+const PDFQ={high:{dpi:150,q:.8},std:{dpi:120,q:.66},min:{dpi:100,q:.5}};
 let pdfQ='std',pdfLib=null,pdfItems=[],pdfBusy=false;
 async function loadPdfJs(){
   if(pdfLib)return pdfLib;
