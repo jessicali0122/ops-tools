@@ -841,6 +841,22 @@ input[type=range]{flex:1;min-width:120px;accent-color:var(--accent)}
 .prog{position:absolute;left:0;right:0;bottom:0;height:4px}
 .prog i{display:block;height:100%;width:0;background:var(--accent);transition:width .2s}
 
+/* 壓縮 PDF */
+.pdfbar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;background:#fff;border:2px solid var(--line);border-radius:16px;padding:12px 16px}
+.pdfbar .unit{white-space:nowrap}
+.pdfbar .seg{flex:0 1 280px}
+.pdfbar .sp{flex:1}
+.pdfbar[hidden]{display:none}
+.pdflist{display:flex;flex-direction:column;gap:8px}
+.prow{display:flex;align-items:center;gap:12px;background:#fff;border:2px solid var(--line);border-radius:12px;padding:10px 12px}
+.prow .pi{width:36px;height:36px;border-radius:10px;background:var(--hover);display:grid;place-items:center;flex:none}
+.prow .pi .ico{width:18px;height:18px}
+.prow .pn{flex:1;min-width:0;display:flex;flex-direction:column;gap:2px}
+.prow .pn>b{font-size:14px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prow .pz{font-size:14px;color:var(--mute);white-space:nowrap}
+.prow .ps{font-size:14px;color:var(--ink-2);white-space:nowrap}
+.prow .ps.err{color:var(--warn);white-space:normal}
+@media(max-width:600px){.prow{flex-wrap:wrap}.prow .pn{flex-basis:calc(100% - 48px)}.prow .ps{flex:1}}
 /* 圖片卡片 */
 .grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:16px}
 /* 右邊只留一個區塊：放圖後直接顯示成品，旁邊只有「加入更多／清空／下載」 */
@@ -982,6 +998,7 @@ input[type=range]{flex:1;min-width:120px;accent-color:var(--accent)}
           <button class="preset" data-preset="compress"><span class="pi"><i class="ico" data-ic="zip"></i></span><span class="pt"><b>壓縮圖檔</b><span>尺寸不變&nbsp;· 轉&nbsp;JPG&nbsp;· 壓到上限內</span></span></button>
           <button class="preset" data-preset="product"><span class="pi"><i class="ico" data-ic="bag"></i></span><span class="pt"><b>置中補白・調整比例</b><span>放到指定比例＋補上白背景</span></span></button>
           <button class="preset" id="goCollage" type="button"><span class="pi"><i class="ico" data-ic="grid"></i></span><span class="pt"><b>組合圖</b><span>多張圖拼成一張</span></span></button>
+          <button class="preset" id="goPdf" type="button"><span class="pi"><i class="ico" data-ic="pdf"></i></span><span class="pt"><b>壓縮 PDF</b><span>PDF 檔案縮小</span></span></button>
           <button class="preset" data-preset="png2jpg"><span class="pi"><i class="ico" data-ic="convert"></i></span><span class="pt"><b>PNG 轉 JPG</b><span>尺寸不變&nbsp;· 透明處填白&nbsp;· 高畫質</span></span></button>
           <button class="preset" data-preset="shrink"><span class="pi"><i class="ico" data-ic="shrink"></i></span><span class="pt"><b>大圖縮小</b><span>長邊&nbsp;1600&nbsp;· 比例不變&nbsp;· 壓到上限內</span></span></button>
         </div>
@@ -1205,6 +1222,27 @@ input[type=range]{flex:1;min-width:120px;accent-color:var(--accent)}
     <div class="grid" id="list"></div>
   </section>
 
+  <section class="work" id="wPdf" hidden>
+    <div class="drop" id="pdfDrop" role="button" tabindex="0">
+      <div class="ic"><i class="ico" data-ic="upload"></i></div>
+      <div class="dt">
+        <b>把 PDF 拖到這裡</b>
+        <p class="p-full">或點一下選擇檔案，可以一次選多份</p>
+        <p class="p-compact">或點一下加入更多</p>
+        <p class="fmt">每頁會轉成圖片再壓縮，壓完的文字<span class="nw">無法選取、複製</span></p>
+      </div>
+      <span class="btn">選擇 PDF</span>
+    </div>
+    <input type="file" id="pdfFile" accept="application/pdf,.pdf" multiple hidden>
+    <div class="pdfbar" id="pdfBar" hidden>
+      <span class="unit">壓縮程度</span>
+      <div class="seg" data-pdfq><button data-v="high" type="button">清晰</button><button data-v="std" type="button">標準</button><button data-v="min" type="button">最小</button></div>
+      <span class="sp"></span>
+      <button class="btn ghost" id="pdfClear" type="button">清空</button>
+      <button class="btn pri" id="pdfAll" type="button" hidden>全部下載</button>
+    </div>
+    <div class="pdflist" id="pdfList"></div>
+  </section>
   <section class="work" id="wCollage" hidden>
     <div class="stage">
       <div class="toolbar">
@@ -1305,6 +1343,7 @@ const IC={
   convert:svg('<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/><path d="m9 15 2 2 4-4"/>'),
   shrink:svg('<path d="M8 3v3a2 2 0 0 1-2 2H3"/><path d="M21 8h-3a2 2 0 0 1-2-2V3"/><path d="M3 16h3a2 2 0 0 1 2 2v3"/><path d="M16 21v-3a2 2 0 0 1 2-2h3"/>'),
   size:svg('<path d="M15 3h6v6"/><path d="M9 21H3v-6"/><path d="m21 3-7 7"/><path d="m3 21 7-7"/>'),
+  pdf:svg('<path d="M14 3H7a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h10a2 2 0 0 0 2-2V8z"/><path d="M14 3v5h5"/><path d="M9 13h6"/><path d="M9 17h4"/>'),
   zip:svg('<path d="M4 14h6v6"/><path d="M20 10h-6V4"/><path d="m14 10 7-7"/><path d="m3 21 7-7"/>'),
   star:svg('<path d="m12 3 2.6 5.6 6.1.7-4.5 4.2 1.2 6L12 16.6 6.6 19.5l1.2-6-4.5-4.2 6.1-.7z"/>'),
   frame:svg('<rect x="3" y="3" width="18" height="18" rx="2"/><rect x="7" y="7" width="10" height="10" rx="1"/>'),
@@ -2054,7 +2093,7 @@ function buildPdf(imgs,o){
   const m=+o.margin;
   imgs.forEach((im,i)=>{
     const pg=3+i*3,ct=pg+1,ig=pg+2;
-    const iw=im.w*0.75,ih=im.h*0.75;let pw,ph;
+    const iw=im.pw||im.w*0.75,ih=im.ph||im.h*0.75;let pw,ph;
     if(o.size==='fit'){pw=iw+m*2;ph=ih+m*2}
     else{const a=o.size==='a4'?[595.28,841.89]:[612,792];const land=o.orient==='l'||(o.orient==='auto'&&im.w>im.h);pw=land?a[1]:a[0];ph=land?a[0]:a[1]}
     const k=Math.min((pw-m*2)/iw,(ph-m*2)/ih);
@@ -2134,7 +2173,7 @@ async function filesFromDT(dt){
 const isFileDrag=e=>[...(e.dataTransfer?.types||[])].includes('Files');
 ['dragenter','dragover'].forEach(t=>drop.addEventListener(t,e=>{if(!isFileDrag(e))return;e.preventDefault();drop.classList.add('over')}));
 ['dragleave','drop'].forEach(t=>drop.addEventListener(t,()=>drop.classList.remove('over')));
-drop.addEventListener('drop',async e=>{if(!isFileDrag(e))return;e.preventDefault();addFiles(await filesFromDT(e.dataTransfer))});
+drop.addEventListener('drop',async e=>{if(!isFileDrag(e))return;e.preventDefault();e.stopPropagation();const fs=await filesFromDT(e.dataTransfer);if(fs.length&&fs.every(isPdf)){goPdf();pdfAdd(fs);return}addFiles(fs)});
 // 防止拖錯地方時瀏覽器直接打開圖片
 window.addEventListener('dragover',e=>e.preventDefault());
 window.addEventListener('drop',async e=>{
@@ -2142,6 +2181,7 @@ window.addEventListener('drop',async e=>{
   if(e.target.closest('.drop,.cell'))return;
   if(!e.dataTransfer?.files?.length)return;
   const fs=await filesFromDT(e.dataTransfer);
+  if(fs.some(isPdf)&&(S.tab==='pdf'||!fs.some(f=>!isPdf(f)))){if(S.tab!=='pdf')goPdf();pdfAdd(fs);return}
   S.tab==='collage'?collageAdd(fs):addFiles(fs);
 });
 document.addEventListener('paste',e=>{
@@ -2748,6 +2788,101 @@ $('#labelChips').onclick=e=>{const b=e.target.closest('.chip');if(!b)return;S.la
 ['labelBg','labelColor'].forEach(k=>$('#'+k).onchange=e=>{S[k]=e.target.value;save();refreshAll()});
 $('#mine .lbl').onclick=()=>$('#mine').classList.toggle('closed');
 $$('.sec[data-sec=preset] .presets:not(#myList) .preset').forEach(b=>{const t=b.querySelector('.pt>span');if(t)b.title=t.textContent.replace(/ /g,' ')});
+/* ---------- 壓縮 PDF：每頁畫成圖片、壓成 JPG，再組回 PDF（pdf.js 第一次用到才載入） ---------- */
+const PDFQ={high:{dpi:150,q:.8},std:{dpi:110,q:.7},min:{dpi:80,q:.55}};
+let pdfQ='std',pdfLib=null,pdfItems=[],pdfBusy=false;
+async function loadPdfJs(){
+  if(pdfLib)return pdfLib;
+  const base='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/';
+  await new Promise((ok,no)=>{const s=document.createElement('script');s.src=base+'pdf.min.js';s.onload=ok;s.onerror=()=>no(new Error('PDF 元件載入失敗，請確認網路'));document.head.appendChild(s)});
+  const lib=window.pdfjsLib;if(!lib)throw new Error('PDF 元件載入失敗');
+  // worker 要同來源，先抓下來轉成 blob 網址
+  try{const t=await(await fetch(base+'pdf.worker.min.js')).text();lib.GlobalWorkerOptions.workerSrc=URL.createObjectURL(new Blob([t],{type:'text/javascript'}))}
+  catch(e){lib.GlobalWorkerOptions.workerSrc=base+'pdf.worker.min.js'}
+  return pdfLib=lib;
+}
+const isPdf=f=>f.type==='application/pdf'||/\.pdf$/i.test(f.name);
+async function compressPdf(it){
+  const lib=await loadPdfJs();
+  const doc=await lib.getDocument({data:new Uint8Array(await it.file.arrayBuffer())}).promise;
+  const o=PDFQ[it.q],imgs=[];
+  try{
+    for(let i=1;i<=doc.numPages;i++){
+      if(it.removed)break;
+      const pg=await doc.getPage(i),v1=pg.getViewport({scale:1}),vp=pg.getViewport({scale:o.dpi/72});
+      const c=document.createElement('canvas');c.width=Math.max(1,Math.round(vp.width));c.height=Math.max(1,Math.round(vp.height));
+      const x=c.getContext('2d');x.fillStyle='#fff';x.fillRect(0,0,c.width,c.height);
+      await pg.render({canvasContext:x,viewport:vp}).promise;
+      const b=await new Promise(r=>c.toBlob(r,'image/jpeg',o.q));
+      imgs.push({w:c.width,h:c.height,pw:v1.width,ph:v1.height,data:new Uint8Array(await b.arrayBuffer())});
+      c.width=c.height=0;pg.cleanup();
+      it.prog=i/doc.numPages;it.pages=doc.numPages;if(!it.removed)paintPdf(it);
+    }
+  }finally{doc.destroy()}
+  return buildPdf(imgs,{size:'fit',orient:'auto',margin:'0'});
+}
+function paintPdf(it){
+  if(!it.el){
+    it.el=document.createElement('div');it.el.className='prow';$('#pdfList').appendChild(it.el);
+    it.el.innerHTML=`<span class="pi"><i class="ico">${IC.pdf}</i></span><div class="pn"><b></b><span class="pz"></span></div><span class="ps"></span><button class="btn sm" data-a="dl" type="button">下載</button><button class="ib" data-a="rm" type="button" title="移除" aria-label="移除">${IC.trash||'×'}</button>`;
+    it.el.querySelector('.pn b').textContent=it.file.name;
+    it.el.querySelector('[data-a=dl]').onclick=()=>{if(it.out)download(it.out,pdfOutName(it))};
+    it.el.querySelector('[data-a=rm]').onclick=()=>{pdfItems=pdfItems.filter(x=>x!==it);it.el.remove();it.removed=true;syncPdfBar()};
+  }
+  const st=it.status==='run'?`處理中 ${Math.round((it.prog||0)*100)}%`:it.status==='err'?'無法處理：'+it.err:it.status==='done'?(it.kept?`${it.pages} 頁 · 原檔已經很小，保留原檔`:`${it.pages} 頁 · 省 ${Math.min(99,Math.round((1-it.out.size/it.file.size)*100))}%`):'等待中';
+  it.el.querySelector('.pz').innerHTML=fmtSize(it.file.size)+(it.out&&!it.kept?' → <b>'+fmtSize(it.out.size)+'</b>':'');
+  const ps=it.el.querySelector('.ps');ps.textContent=st;ps.className='ps '+it.status;
+  it.el.querySelector('[data-a=dl]').disabled=it.status!=='done';
+  syncPdfBar();
+}
+const pdfOutName=it=>it.kept?it.file.name:it.file.name.replace(/\.pdf$/i,'')+'_壓縮.pdf';
+function syncPdfBar(){
+  const done=pdfItems.filter(i=>i.status==='done');
+  $('#pdfBar').hidden=!pdfItems.length;
+  $('#pdfAll').hidden=done.length<2;
+  $('#pdfDrop').classList.toggle('compact',!!pdfItems.length);
+}
+async function runPdf(){
+  if(pdfBusy)return;pdfBusy=true;
+  try{
+    let it;
+    while((it=pdfItems.find(i=>i.status==='wait'))){
+      it.status='run';it.prog=0;it.q=pdfQ;paintPdf(it);
+      try{
+        const out=await compressPdf(it);
+        if(it.removed)continue;
+        if(it.q!==pdfQ){it.status='wait';continue}
+        it.kept=out.size>=it.file.size;it.out=it.kept?it.file:out;it.status='done';
+      }catch(e){it.status='err';it.err=(e&&e.name==='PasswordException')?'有密碼保護的 PDF 無法壓縮':(e?.message||String(e))}
+      if(!it.removed)paintPdf(it);
+    }
+  }finally{pdfBusy=false;syncPdfBar()}
+}
+function pdfAdd(files){
+  const fs=[...files].filter(isPdf);
+  if(!fs.length){toast('沒有 PDF 檔');return}
+  for(const f of fs){const it={file:f,status:'wait'};pdfItems.push(it);paintPdf(it)}
+  toast(`已加入 ${fs.length} 份 PDF`);
+  runPdf();
+}
+function goPdf(){S.tab='pdf';save();syncUI()}
+$('#goPdf').onclick=goPdf;
+$('#pdfDrop').onclick=()=>$('#pdfFile').click();
+$('#pdfDrop').onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();$('#pdfFile').click()}};
+$('#pdfFile').onchange=e=>{pdfAdd(e.target.files);e.target.value=''};
+['dragenter','dragover'].forEach(t=>$('#pdfDrop').addEventListener(t,e=>{if(!isFileDrag(e))return;e.preventDefault();$('#pdfDrop').classList.add('over')}));
+['dragleave','drop'].forEach(t=>$('#pdfDrop').addEventListener(t,()=>$('#pdfDrop').classList.remove('over')));
+$('#pdfDrop').addEventListener('drop',async e=>{if(!isFileDrag(e))return;e.preventDefault();pdfAdd(await filesFromDT(e.dataTransfer))});
+$$('.seg[data-pdfq]').forEach(sg=>sg.onclick=e=>{const b=e.target.closest('button');if(!b||b.dataset.v===pdfQ)return;pdfQ=b.dataset.v;syncPdfQ();pdfItems.forEach(i=>{if(i.status!=='run'){i.status='wait';i.out=null;i.kept=false;paintPdf(i)}});runPdf()});
+function syncPdfQ(){$$('.seg[data-pdfq] button').forEach(b=>b.classList.toggle('on',b.dataset.v===pdfQ))}
+syncPdfQ();
+$('#pdfClear').onclick=()=>{pdfItems.forEach(i=>{i.removed=true;i.el?.remove()});pdfItems=[];syncPdfBar()};
+$('#pdfAll').onclick=async()=>{
+  const done=pdfItems.filter(i=>i.status==='done');if(!done.length)return;
+  const z=await makeZip(done.map(i=>({name:pdfOutName(i),blob:i.out})));
+  const d=new Date(),p=v=>String(v).padStart(2,'0');
+  download(z,`PDF_${d.getFullYear()}${p(d.getMonth()+1)}${p(d.getDate())}_${p(d.getHours())}${p(d.getMinutes())}.zip`);
+};
 $('#goCollage').onclick=()=>{S.tab='collage';save();syncUI();renderCollage()};
 $('#advBtn').onclick=()=>{advOpen=!advOpen;syncUI()};
 $('#cutOn').onchange=e=>{S.cutOn=e.target.checked;if(S.cutOn)S.open.cut=true;if(S.cutOn&&S.fmt==='jpeg')S.fmt='png';save();syncUI();refreshAll()};
@@ -2774,7 +2909,8 @@ function syncUI(){
   $$('.sec').forEach(s=>s.classList.toggle('closed',!S.open[s.dataset.sec]));
   $$('.sec[data-sec]').forEach(s=>{const k=s.dataset.sec;if(S.tab==='batch'&&['size','cut','extras','output','naming'].includes(k))s.hidden=!(advOpen||(k==='cut'&&S.cutOn)||(k==='size'&&S.sizeMode==='fixed'&&!S.cutOn));else if(S.tab==='collage'&&['cut','extras','output'].includes(k))s.hidden=false});
   $('#advTg').textContent=advOpen?'收起 ▴':'展開 ▾';
-  $('#wBatch').hidden=S.tab!=='batch';$('#wCollage').hidden=S.tab!=='collage';
+  $('#wBatch').hidden=S.tab!=='batch';$('#wCollage').hidden=S.tab!=='collage';$('#wPdf').hidden=S.tab!=='pdf';
+  if(S.tab==='pdf')$$('.sec[data-sec]').forEach(s=>{if(s.dataset.sec!=='preset')s.hidden=true});
   $('#fixedBox').hidden=S.sizeMode!=='fixed';$('#maxBox').hidden=S.sizeMode!=='max';
   $('#containBox').hidden=S.fit!=='contain';
   $('#limitBox').hidden=S.mode!=='limit';$('#qualityBox').hidden=S.mode!=='quality';
@@ -2800,12 +2936,12 @@ function syncUI(){
   $$('#labelChips .chip').forEach(c=>c.classList.toggle('on',c.textContent===S.labelText));
   const inBatch=S.tab==='batch';
   $$('.preset[data-preset]').forEach(b=>b.classList.toggle('on',inBatch&&presetOn(b.dataset.preset)));
-  $('#goCollage').classList.toggle('on',!inBatch);
+  $('#goCollage').classList.toggle('on',S.tab==='collage');$('#goPdf').classList.toggle('on',S.tab==='pdf');
   $('#kbqRow').hidden=!inBatch;$('#mine').hidden=!inBatch;
   $$('#myList .uprow').forEach(r=>{const p=myPresets.find(x=>x.id===r.dataset.id);r.querySelector('.preset').classList.toggle('on',inBatch&&!!p&&settingsMatch(p.settings))});
   // 分區標題旁的目前設定
   const pm=Object.keys(PRESETS).find(presetOn),um=myPresets.find(p=>settingsMatch(p.settings));
-  $('#sum-preset').textContent=!inBatch?'組合圖':um?um.name:pm?PRESET_NAMES[pm]:'';
+  $('#sum-preset').textContent=S.tab==='pdf'?'壓縮 PDF':S.tab==='collage'?'組合圖':um?um.name:pm?PRESET_NAMES[pm]:'';
   $('#sum-size').textContent=S.sizeMode==='fixed'?`${S.fw}×${S.fh} · ${S.fit==='contain'?'補白':'裁切'}`:S.sizeMode==='max'?`長邊 ${S.maxEdge}`:'不改尺寸';
   $('#sum-layout').textContent=LAYOUTS[S.layout].length+' 格';
   $('#sum-canvas').textContent=`${S.cw}×${S.ch}`;
@@ -2813,7 +2949,7 @@ function syncUI(){
   $('#sum-extras').textContent=ex.length?ex.join(' · '):'未使用';
   $('#sum-output').textContent=`${FMT_NAME[S.fmt]} · ${S.mode==='limit'?kbTxt(S.kb)+' 內':'品質 '+S.q}`;
   $('#sum-naming').textContent={keep:'維持原名',suffix:'加後綴',seq:'流水號'}[S.naming];
-  $('#kbQuick').value=S.kb;$('#kbqRow').hidden=S.mode!=='limit';
+  $('#kbQuick').value=S.kb;$('#kbqRow').hidden=!inBatch||S.mode!=='limit';
   renderPlan();
   syncNameEx();
 }
@@ -2853,7 +2989,8 @@ buildLayoutBtns();syncUI();renderCollage();loadPresets();restoreAssets();
   // 公司帳號登入：只放行 @tsagroup.com.tw（本機 file:// 或 localhost 直接開，不用登入）
   var CID='645628565819-tq01gncf3cmvtrfo5ffklu2f69jdlbrk.apps.googleusercontent.com',DOM='tsagroup.com.tw',TK='opstools.cred';
   var gate=document.getElementById('gate'),msg=document.getElementById('gmsg');
-  function openApp(){gate.hidden=true;show(init);}
+  function openApp(){gate.hidden=true;show(init);setTimeout(preload,1200);}
+  function preload(){['qa','img'].forEach(function(k){if(!loaded[k]){loaded[k]=1;document.getElementById('f-'+k).srcdoc=tpl(k);}});}
   function claims(c){try{var s=c.split('.')[1].replace(/-/g,'+').replace(/_/g,'/');return JSON.parse(decodeURIComponent(escape(atob(s))));}catch(e){return null;}}
   function okClaims(p){return !!p&&p.hd===DOM&&p.email_verified!==false&&typeof p.email==='string'&&p.email.toLowerCase().slice(-(DOM.length+1))==='@'+DOM;}
   function okCred(c){var p=claims(c);return okClaims(p)&&p.aud===CID&&p.exp*1000>Date.now();}
